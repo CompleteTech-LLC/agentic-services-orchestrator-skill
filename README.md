@@ -10,6 +10,18 @@ A CompleteTech LLC Codex skill for routing multi-stage agentic services work acr
 
 Part of the CompleteTech LLC agentic services skill library. This skill coordinates lifecycle routing across specialist skills without replacing their templates, guardrails, or approval boundaries.
 
+## OpenClaw / ClawHub Metadata
+
+- Skill key: `agentic-services-orchestrator-skill`
+- Version-ready metadata: `1.0.0`
+- Homepage: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill
+- README: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill#readme
+- Runtime binaries: none
+- Python packages: none
+- Intended registry/discovery tags: `latest`, `complete-tech`, `codex-skill`, `agentic-development`, `agentic-workflows`, `orchestration`, `skill-routing`, `lifecycle`
+- License: repository code, templates, and documentation use MIT; ClawHub publishing is intentionally skipped for now.
+- Brand assets: CompleteTech LLC names, logos, seals, and brand assets are reserved; see `BRAND_ASSETS.md`.
+
 ## Workflow Diagram
 
 ```mermaid

@@ -1,6 +1,12 @@
 ---
 name: agentic-services-orchestrator-skill
-description: Coordinate the CompleteTech LLC agentic services skill library across discovery, email, proposal, contract, invoice, delivery, security review, customer success, case study, and certificate workflows. Use when Codex needs to choose, sequence, or hand off between multiple agentic specialist skills without replacing their detailed instructions.
+description: >-
+  Coordinate the CompleteTech LLC agentic services skill library across discovery, email, proposal, contract, invoice, delivery, security review, customer success, case study, and certificate workflows. Use when Codex needs to choose, sequence, or hand off between multiple agentic specialist skills without replacing their detailed instructions.
+version: 1.0.0
+metadata:
+  openclaw:
+    skillKey: agentic-services-orchestrator-skill
+    homepage: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill
 ---
 
 # Agentic Services Orchestrator Skill
