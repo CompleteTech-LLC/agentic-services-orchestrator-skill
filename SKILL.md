@@ -111,3 +111,19 @@ project_state:
 - If the library becomes one package, should repeated renderer logic and shared assets move into common helpers?
 - Should `agentic-case-study-skill` be renamed to `agentic-proof-skill`?
 - Should sending, invoice issuance, and public proof publication get a dedicated approval workflow file shared by email, envelope, invoice, and case study?
+
+## Rendering to a Branded PDF
+
+Artifacts from this skill are delivered as branded CompleteTech LLC **PDF** documents, not raw Markdown. After drafting the artifact text (optionally starting from a catalog template), render it with the bundled generator:
+
+```bash
+pip install -r requirements.txt
+python3 scripts/render_pdf.py \
+  --markdown artifact.md --out artifact.pdf --png artifact.png \
+  --logo assets/logo.png \
+  --title "Engagement Orchestration Overview" --doc-type "SERVICES ORCHESTRATION" \
+  --subtitle "Prepared for <b>Client Name</b>" \
+  --meta "DOCUMENT NO.=ORCH-2026-001" --meta "DATE=2026-05-24"
+```
+
+`scripts/render_pdf.py` applies the shared CompleteTech branding (logo, cover page, letterhead band, watermark, footer) and supports a Markdown subset: `#`/`##`/`###` headings, paragraphs, `-` bullet lists, tables, `>` callouts, `**bold**`, and `[PAGE_BREAK]`. It requires `reportlab`; the optional `--png` preview montage requires `pypdfium2` and `pillow`. See `assets/examples/` for a rendered example.
