@@ -1,7 +1,7 @@
 ---
 name: agentic-services-orchestrator-skill
 description: >-
-  Coordinate the CompleteTech LLC agentic services skill library across discovery, email, proposal, contract, invoice, delivery, security review, customer success, case study, and certificate workflows. Use when Codex needs to choose, sequence, or hand off between multiple agentic specialist skills without replacing their detailed instructions.
+  Coordinate the CompleteTech LLC agentic services skill library across discovery, proposal, contract, delivery, customer success, invoice, certificate, case study, email, envelope, and security-review workflows. Use when Codex needs to identify lifecycle stage, route to specialist skills, pass project context, manage handoffs, prevent duplicate work, weave in supporting plugins, and preserve one coherent client/project state.
 version: 1.0.0
 metadata:
   openclaw:
@@ -13,26 +13,46 @@ metadata:
 
 ## Purpose
 
-Coordinate the CompleteTech LLC agentic services lifecycle. Use this skill to choose, sequence, and hand off between specialist skills. Do not replace specialist templates, skip their guardrails, or invent missing facts.
+Coordinate the CompleteTech LLC agentic services lifecycle. The orchestrator owns workflow state, routing, sequencing, dependency tracking, handoff contracts, missing-info handling, approval gates, and plugin-weaving. Specialist skills own their artifacts.
 
-## Routing Guide
+For the complete architecture, per-skill responsibility matrix, handoff schema, plugin-weaving model, deduplication guidance, and example multi-skill workflows, load `references/orchestration-architecture.md`.
 
-- Discovery/scoping, workflow facts, readiness, success criteria, and proposal handoff: `agentic-discovery-skill`.
-- Outreach, follow-up, cover notes, delivery updates, retention, referral, and win-back message copy: `agentic-email-skill`.
-- Proposal, SOW, commercial scope, pilot, change order, evaluation/risk plan, roadmap, or buyer approval summary: `agentic-proposal-skill`.
-- Agreement package, contract PDF, filled Markdown, branded contract output, or envelope: `agentic-contract-skill`.
-- Invoice, deposit, payment, credit, refund, retainer, pass-through, receipt, or billing document: `agentic-invoice-skill`.
-- Approved delivery execution, kickoff, project controls, evaluation, launch, support, handoff, runbook, or closeout: `agentic-delivery-skill`.
-- Security, permissions, data, credentials, tool access, retrieval trust, external actions, launch risk, rollback, incident response, or signoff: `agentic-security-review-skill`.
-- Account health, contact routing, follow-ups, renewal, expansion, escalation, advocacy planning, or at-risk recovery: `agentic-customer-success-skill`.
-- Approved proof, case study, testimonial, public story, quote approval, anonymization, press, award, or portfolio asset: `agentic-case-study-skill`.
-- Attendance certificate, course/workshop completion certificate, recipient certificate PDF, or certificate ID generation: `agentic-certificate-skill`.
+## Lifecycle Model
 
-When more than one route applies, choose the earliest missing lifecycle artifact first, then hand off to the next specialist skill.
+Discovery -> Proposal -> Contract -> Delivery -> Customer Success.
+
+Supporting outputs: Invoice, Certificate, Case Study, Email, Envelope.
+
+Overlay/gate: Security Review.
+
+## Routing Logic
+
+1. Classify intent: create artifact, route work, continue workflow, package/send outputs, review risk, collect missing facts, or approve a transition.
+2. Identify lifecycle stage and current state from explicit user context, existing artifacts, or prior handoff notes.
+3. Select the earliest missing lifecycle artifact unless the user requests a specific support output.
+4. Invoke security review before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, or public proof.
+5. Use email only for message drafting and sequences. Use envelope only for packaging, recipients, attachments, filenames, metadata, and delivery-readiness.
+6. Return a handoff package with artifact paths, decisions, unresolved questions, blockers, approvals, next owner, and next recommended skill.
+
+## Skill Invocation Rules
+
+- `agentic-discovery-skill`: fact finding, workflow maps, readiness, success criteria, risk/excluded-use checks, and proposal handoff briefs.
+- `agentic-proposal-skill`: buyer-facing scope, SOWs, pilot recommendations, evaluation plans, roadmaps, and change-order proposals.
+- `agentic-contract-skill`: agreement content and contract package generation from approved commercial facts.
+- `agentic-delivery-skill`: execution, kickoff, project controls, evaluation, launch readiness, handoff, runbooks, and closeout after approval.
+- `agentic-customer-success-skill`: relationship state, contact routing, account health, renewals, expansion, escalations, and advocacy planning.
+- `agentic-invoice-skill`: invoice-event selection, invoice drafts, billing documents, credits, receipts, retainers, and payment requests.
+- `agentic-certificate-skill`: certificate PDF generation from verified recipient and course/workshop facts.
+- `agentic-case-study-skill`: verified and approved proof, testimonials, public stories, quote approval, anonymization, and proof libraries.
+- `agentic-email-skill`: outbound/inbound message copy, sequences, cover notes, follow-ups, and approval request drafts.
+- `agentic-envelope-skill`: addressed envelopes, delivery packages, attachments, recipient metadata, filenames, and send/readiness checklists.
+- `agentic-security-review-skill`: confidentiality, sensitive data, permissions, compliance/risk, approval gates, launch blockers, and escalation.
 
 ## Boundary Rules
 
+- The orchestrator owns routing and state; specialist skills do not own lifecycle orchestration.
 - Email drafts must not replace proposals, invoices, contracts, delivery records, customer records, security reviews, certificates, or proof.
+- Envelope packaging must not create contract, invoice, certificate, proposal, delivery, proof, or email content.
 - Discovery outputs are not final proposals, contracts, invoices, delivery plans, security signoffs, or public proof.
 - Proposal scope must use verified discovery or user-provided facts; use `TBD` for missing scope, proof, pricing, outcomes, or approvals.
 - Contract and invoice artifacts must not invent legal, pricing, tax, payment, client, authority, signature, or approval facts.
@@ -42,25 +62,52 @@ When more than one route applies, choose the earliest missing lifecycle artifact
 - Case studies, testimonials, quotes, and named references require verified approval.
 - Certificates require verified recipient and course/workshop facts; they are not delivery acceptance or public proof.
 
+## Context-Passing Schema
+
+Use this shape when handing work between skills:
+
+```yaml
+project_state:
+  client: TBD
+  workflow: TBD
+  lifecycle_stage: discovery|proposal|contract|delivery|customer_success
+  requested_outcome: TBD
+  source_artifacts: []
+  known_facts: {}
+  missing_info: []
+  blockers: []
+  approvals:
+    commercial: unknown
+    legal_or_contract: unknown
+    security: unknown
+    external_send: unknown
+    public_proof: unknown
+  security_flags: []
+  next_skill: TBD
+  downstream_handoff: TBD
+```
+
 ## Common Workflows
 
-1. Lead to scoped proposal: `agentic-discovery-skill` for facts and fit, `agentic-email-skill` for outreach/recaps, then `agentic-proposal-skill` for proposal or SOW.
-2. Proposal to signed kickoff: `agentic-proposal-skill` for final scope, `agentic-contract-skill` for agreement, `agentic-invoice-skill` for deposit or kickoff billing, `agentic-email-skill` for send/follow-up, then `agentic-delivery-skill` after approval.
-3. Delivery launch readiness: `agentic-delivery-skill` for execution, evaluation, acceptance, runbooks, support, and handoff; `agentic-security-review-skill` for permissions, data, tool actions, launch blockers, rollback, and signoff; `agentic-email-skill` for client updates.
-4. Post-launch support and account management: `agentic-delivery-skill` for support/handoff records, `agentic-customer-success-skill` for account health and renewal/expansion, and `agentic-invoice-skill` for support, retainer, overage, or renewal billing.
-5. Post-project proof or testimonial creation: `agentic-delivery-skill` for evidence, `agentic-customer-success-skill` for approver timing, `agentic-case-study-skill` for approved proof, and `agentic-email-skill` for approval/share messages.
-6. Training or workshop certificate generation: `agentic-certificate-skill` for the certificate PDF when facts are verified; `agentic-email-skill` only for the delivery message.
+1. Lead to scoped proposal: discovery -> email recap -> proposal -> security review if sensitive data/tools are involved.
+2. Proposal to signed kickoff: proposal -> contract -> invoice -> envelope package -> email cover note -> delivery after approval.
+3. Delivery launch readiness: delivery -> security review -> approval gate -> email status/update -> customer success handoff.
+4. Post-launch support: delivery support record -> customer success health/renewal -> invoice for retainer/overage if approved.
+5. Proof creation: delivery evidence -> customer success approver/timing -> case study -> security/anonymization gate -> email approval request.
+6. Training certificate: certificate -> envelope package if mailed -> email delivery message if sent digitally.
 
 ## Operating Pattern
 
 1. Identify the lifecycle stage and current missing artifact.
 2. Route to the most specific specialist skill.
-3. Preserve facts and open questions during handoff.
-4. Use `TBD` for unknowns instead of filling gaps.
-5. Stop at the appropriate approval gate before public use, legal commitment, invoice issuance, production launch, external communication, or proof publication.
+3. Pass a compact `project_state` object plus artifact-specific inputs.
+4. Preserve facts, assumptions, blockers, approvals, and open questions during handoff.
+5. Use `TBD` for unknowns instead of filling gaps.
+6. Stop at the appropriate approval gate before public use, legal commitment, invoice issuance, production launch, external communication, packaging/sending, or proof publication.
+7. After a specialist returns output, update `project_state` and name the next skill or blocker.
 
 ## Unresolved Questions
 
 - If the library becomes one package, should repeated renderer logic and shared assets move into common helpers?
 - Should `agentic-case-study-skill` be renamed to `agentic-proof-skill`?
-- Should sending, invoice issuance, and public proof publication get a separate approval workflow?
+- Should sending, invoice issuance, and public proof publication get a dedicated approval workflow file shared by email, envelope, invoice, and case study?
