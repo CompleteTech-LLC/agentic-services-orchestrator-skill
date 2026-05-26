@@ -74,12 +74,13 @@ flowchart LR
 - `references/completetech-services-workflow.yaml` - default CompleteTech services workflow adapter.
 - `references/hiring-pipeline-workflow.yaml` - small non-services adapter example.
 - `references/orchestration-architecture.md` - universal architecture, adapter model, responsibility matrix, and examples.
+- `references/skill-layout-standardization.md` - cross-skill repository shell audit and intentional differences.
 - `scripts/render_pdf.py` - branded CompleteTech PDF generator (Markdown -> PDF + optional PNG preview).
 - `requirements.txt` - Python dependencies for branded PDF rendering.
 
-## Brand Notes
+## Quick Start
 
-Use a direct, practical, low-hype tone. The orchestrator coordinates the lifecycle; it does not replace specialist templates or invent missing facts.
+Load the skill when work spans multiple stages, owners, adapters, approvals, or artifacts. Use `project_state.workflow_type` to select an adapter; when it is missing, the orchestrator defaults to `completetech_services`.
 
 ## Example
 
@@ -102,6 +103,10 @@ python3 scripts/render_pdf.py --markdown assets/examples/example.md \
   --logo assets/logo.png --title "Engagement Orchestration Overview" \
   --doc-type "SERVICES ORCHESTRATION" --subtitle "Worked example: <b>Northwind Trading Co.</b> pilot" --meta "DOCUMENT=ORCH-2026-001" --meta "DATE=2026-05-24" --meta "ENGAGEMENT=Support triage pilot"
 ```
+
+## Brand Notes
+
+Use a direct, practical, low-hype tone. The orchestrator coordinates the lifecycle; it does not replace specialist templates or invent missing facts.
 
 ## License
 

@@ -17,6 +17,10 @@ Coordinate workflow state, routing, sequencing, dependency tracking, handoff con
 
 For the complete architecture, per-skill responsibility matrix, handoff schema, plugin-weaving model, deduplication guidance, and example multi-skill workflows, load `references/orchestration-architecture.md`. For schema-driven routing, load `references/workflow-definition-schema.yaml` and the default adapter `references/completetech-services-workflow.yaml`.
 
+## System Boundary
+
+This skill owns workflow definition loading, routing policy, project state, event logging, validation, recovery selection, and specialist handoff coordination. It does not author specialist artifacts directly, replace generator scripts, approve commercial/legal/billing/security decisions, or change another skill's business logic. Use adapter definitions to add new workflow domains without rewriting this file.
+
 ## Universal Workflow Model
 
 The orchestrator is based on generic workflow primitives:

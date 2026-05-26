@@ -1,0 +1,29 @@
+# Common local/editor/cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+Thumbs.db
+desktop.ini
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets and local-only config
+.env
+.env.*
+!.env.example
+secrets.json
+*_secret.ini
+*_local.ini
+
+# Generated local artifacts
+preview/
+output/
+*.tmp
