@@ -31,6 +31,12 @@ TEXT_SUFFIXES = {
     ".md", ".mmd", ".ps1", ".py", ".sh", ".svg", ".toml", ".txt", ".yaml", ".yml",
 }
 SPECIAL_TEXT_FILES = {"LICENSE", "README", "SKILL.md", "QUALITY.md", "CLAW_HUB_PUBLISHING.md", ".clawhubignore"}
+DEFAULT_CLAWHUBIGNORE_PATTERNS = [
+    "*.png", "*.jpg", "*.jpeg", "*.gif", "*.ico", "*.pdf", "*.docx", "*.ipynb", "*.ttf", "*.otf", "*.woff", "*.woff2",
+    "preview/", "output/", "__pycache__/", "*.py[cod]", "*$py.class", ".mypy_cache/", ".pytest_cache/", ".ruff_cache/",
+    ".venv/", "venv/", "env/", "ENV/", ".env", ".env.*", "secrets.json", "*_secret.ini", "*_local.ini", "*.tmp",
+    ".DS_Store", "Thumbs.db", "desktop.ini",
+]
 
 
 def iter_files(*suffixes: str) -> list[Path]:
@@ -175,7 +181,10 @@ def frontmatter() -> dict[str, Any]:
 def ignore_patterns() -> list[str]:
     ignore_file = ROOT / ".clawhubignore"
     if not ignore_file.exists():
-        raise RuntimeError(".clawhubignore is required for ClawHub publishing")
+        if (ROOT / ".git").exists():
+            raise RuntimeError(".clawhubignore is required for ClawHub publishing")
+        print("clawhub ignore defaults used: .clawhubignore is not present in this installed package")
+        return DEFAULT_CLAWHUBIGNORE_PATTERNS.copy()
     patterns = []
     for raw in ignore_file.read_text(encoding="utf-8").splitlines():
         line = raw.strip()

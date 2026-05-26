@@ -2,7 +2,7 @@
 name: agentic-services-orchestrator-skill
 description: >-
   Coordinate schema-driven workflows across configurable domains using workflow definitions, adapters, active tracks, artifact versions, approval/risk triage, event logs, validation, and recovery actions. Use the CompleteTech LLC agentic services workflow as the default adapter for discovery, proposal, contract, delivery, customer success, invoice, certificate, case study, email, envelope, and security-review work.
-version: 1.0.0
+version: 1.0.1
 metadata:
   openclaw:
     skillKey: agentic-services-orchestrator-skill
