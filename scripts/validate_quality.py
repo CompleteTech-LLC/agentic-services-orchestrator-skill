@@ -91,6 +91,15 @@ def mermaid_command() -> list[str] | None:
     return None
 
 
+def mermaid_puppeteer_config(out_dir: Path) -> Path:
+    config_path = out_dir / "puppeteer-config.json"
+    config_path.write_text(
+        json.dumps({"args": ["--no-sandbox", "--disable-setuid-sandbox"]}),
+        encoding="utf-8",
+    )
+    return config_path
+
+
 def validate_mermaid(skip: bool) -> None:
     diagrams = iter_files(".mmd")
     if not diagrams:
@@ -103,8 +112,15 @@ def validate_mermaid(skip: bool) -> None:
         return
     with tempfile.TemporaryDirectory(prefix="skill-mermaid-") as tmp:
         out_dir = Path(tmp)
+        puppeteer_config = mermaid_puppeteer_config(out_dir)
         for index, path in enumerate(diagrams, start=1):
-            run([*cmd, "-i", str(path), "-o", str(out_dir / f"diagram-{index}.svg"), "-b", "white"])
+            run([
+                *cmd,
+                "-i", str(path),
+                "-o", str(out_dir / f"diagram-{index}.svg"),
+                "-b", "white",
+                "-p", str(puppeteer_config),
+            ])
     print("mermaid ok")
 
 
