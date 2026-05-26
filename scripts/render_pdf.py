@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import html
 import re
-from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -35,7 +34,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas as pdf_canvas
 from reportlab.platypus import (
-    Flowable, KeepTogether, ListFlowable, ListItem, PageBreak, Paragraph,
+    Flowable, ListFlowable, ListItem, PageBreak, Paragraph,
     SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -271,7 +270,7 @@ def is_block_start(line: str) -> bool:
 
 
 def paragraph_text(lines: Sequence[str]) -> str:
-    parts = [(l.strip() + "<br/>") if l.endswith("  ") else l.strip() for l in lines]
+    parts = [(line.strip() + "<br/>") if line.endswith("  ") else line.strip() for line in lines]
     return re.sub(r"<br/>\s+", "<br/>", " ".join(parts))
 
 
@@ -286,19 +285,29 @@ def markdown_to_story(md, styles, available, pal) -> List[Any]:
             i += 1
             continue
         if line == "[PAGE_BREAK]":
-            story.append(PageBreak()); i += 1; continue
+            story.append(PageBreak())
+            i += 1
+            continue
         if line.startswith("# "):
             story.append(Paragraph(inline_markup(line[2:].strip()), styles["Title"]))
-            story.append(Spacer(1, 0.05 * inch)); i += 1; continue
+            story.append(Spacer(1, 0.05 * inch))
+            i += 1
+            continue
         if line.startswith("## "):
-            story.append(Paragraph(numbered_heading_markup(line[3:].strip(), pal), styles["Heading2"])); i += 1; continue
+            story.append(Paragraph(numbered_heading_markup(line[3:].strip(), pal), styles["Heading2"]))
+            i += 1
+            continue
         if line.startswith("### "):
-            story.append(Paragraph(inline_markup(line[4:].strip()), styles["Heading3"])); i += 1; continue
+            story.append(Paragraph(inline_markup(line[4:].strip()), styles["Heading3"]))
+            i += 1
+            continue
         if line.startswith("> "):
             q = []
             while i < len(lines) and lines[i].strip().startswith("> "):
-                q.append(lines[i].strip()[2:]); i += 1
-            story.append(make_callout(q, styles, available, pal)); continue
+                q.append(lines[i].strip()[2:])
+                i += 1
+            story.append(make_callout(q, styles, available, pal))
+            continue
         if line.startswith("- "):
             items = []
             while i < len(lines) and lines[i].strip().startswith("- "):
@@ -307,16 +316,21 @@ def markdown_to_story(md, styles, available, pal) -> List[Any]:
                 i += 1
             story.append(ListFlowable(items, bulletType="bullet", bulletFontName="Helvetica-Bold",
                                       bulletFontSize=6, leftIndent=20, bulletColor=pal["accent"]))
-            story.append(Spacer(1, 0.04 * inch)); continue
+            story.append(Spacer(1, 0.04 * inch))
+            continue
         if line.startswith("|"):
             tl = []
             while i < len(lines) and lines[i].strip().startswith("|"):
-                tl.append(lines[i]); i += 1
+                tl.append(lines[i])
+                i += 1
             story.append(make_table(tl, styles, available, pal))
-            story.append(Spacer(1, 0.10 * inch)); continue
-        para = [raw]; i += 1
+            story.append(Spacer(1, 0.10 * inch))
+            continue
+        para = [raw]
+        i += 1
         while i < len(lines) and lines[i].strip() and not is_block_start(lines[i]):
-            para.append(lines[i]); i += 1
+            para.append(lines[i])
+            i += 1
         story.append(Paragraph(inline_markup(paragraph_text(para)), styles["Body"]))
     return story
 
@@ -332,33 +346,42 @@ def draw_watermark(c, w, h, text):
         c.setFillColor(colors.Color(0.7, 0.7, 0.7, alpha=0.16))
     except TypeError:
         c.setFillColor(colors.HexColor("#D1D5DB"))
-    c.translate(w / 2.0, h / 2.0); c.rotate(42)
+    c.translate(w / 2.0, h / 2.0)
+    c.rotate(42)
     c.setFont("Helvetica-Bold", 58)
-    c.drawCentredString(0, 0, text); c.restoreState()
+    c.drawCentredString(0, 0, text)
+    c.restoreState()
 
 
 def draw_letterhead_band(c, meta, w, h, pal, logo_path):
     band = 0.95 * inch
     c.saveState()
-    c.setFillColor(pal["accent_dark"]); c.rect(0, h - band, w, band, stroke=0, fill=1)
-    c.setFillColor(pal["accent"]); c.rect(0, h - band - 0.04 * inch, w, 0.04 * inch, stroke=0, fill=1)
+    c.setFillColor(pal["accent_dark"])
+    c.rect(0, h - band, w, band, stroke=0, fill=1)
+    c.setFillColor(pal["accent"])
+    c.rect(0, h - band - 0.04 * inch, w, 0.04 * inch, stroke=0, fill=1)
     pad = 0.72 * inch
     ls = 0.52 * inch
     draw_logo(c, pad, h - band + (band - ls) / 2.0, ls, logo_path, pal, on_dark=True)
     nx = pad + ls + 0.18 * inch
-    c.setFillColor(pal["white"]); c.setFont("Helvetica-Bold", 13.5)
+    c.setFillColor(pal["white"])
+    c.setFont("Helvetica-Bold", 13.5)
     c.drawString(nx, h - 0.42 * inch, BRAND["brand_name"])
-    c.setFont("Helvetica", 8.5); c.setFillColor(colors.Color(1, 1, 1, alpha=0.78))
+    c.setFont("Helvetica", 8.5)
+    c.setFillColor(colors.Color(1, 1, 1, alpha=0.78))
     c.drawString(nx, h - 0.58 * inch, BRAND["brand_tagline"])
-    c.setFont("Helvetica", 7.5); c.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
+    c.setFont("Helvetica", 7.5)
+    c.setFillColor(colors.Color(1, 1, 1, alpha=0.62))
     c.drawString(nx, h - 0.74 * inch, BRAND["contact"])
     right = w - pad
     pairs = meta[:2]
     ys = [(0.36, 0.50), (0.66, 0.80)]
     for (label, value), (ly, vy) in zip(pairs, ys):
-        c.setFillColor(colors.Color(1, 1, 1, alpha=0.7)); c.setFont("Helvetica", 7.2)
+        c.setFillColor(colors.Color(1, 1, 1, alpha=0.7))
+        c.setFont("Helvetica", 7.2)
         c.drawRightString(right, h - ly * inch, label.upper())
-        c.setFillColor(pal["white"]); c.setFont("Helvetica-Bold", 10.5)
+        c.setFillColor(pal["white"])
+        c.setFont("Helvetica-Bold", 10.5)
         c.drawRightString(right, h - vy * inch, value)
     c.restoreState()
 
@@ -369,16 +392,21 @@ def draw_compact_header(c, doc_title, doc_id, w, h, pal, logo_path):
     draw_logo(c, pad, h - 0.62 * inch, ls, logo_path, pal, on_dark=False)
     tx = pad + ls + 0.12 * inch
     c.saveState()
-    c.setFillColor(pal["ink"]); c.setFont("Helvetica-Bold", 9)
+    c.setFillColor(pal["ink"])
+    c.setFont("Helvetica-Bold", 9)
     c.drawString(tx, h - 0.46 * inch, BRAND["brand_name"])
-    c.setFillColor(pal["muted"]); c.setFont("Helvetica", 7.5)
+    c.setFillColor(pal["muted"])
+    c.setFont("Helvetica", 7.5)
     c.drawString(tx, h - 0.58 * inch, BRAND["brand_tagline"])
     right = w - pad
-    c.setFillColor(pal["ink"]); c.setFont("Helvetica-Bold", 8.8)
+    c.setFillColor(pal["ink"])
+    c.setFont("Helvetica-Bold", 8.8)
     c.drawRightString(right, h - 0.46 * inch, doc_title)
-    c.setFillColor(pal["muted"]); c.setFont("Helvetica", 7.5)
+    c.setFillColor(pal["muted"])
+    c.setFont("Helvetica", 7.5)
     c.drawRightString(right, h - 0.58 * inch, doc_id)
-    c.setStrokeColor(pal["accent"]); c.setLineWidth(0.8)
+    c.setStrokeColor(pal["accent"])
+    c.setLineWidth(0.8)
     c.line(pad, h - 0.74 * inch, right, h - 0.74 * inch)
     c.restoreState()
 
@@ -388,13 +416,17 @@ def draw_footer(c, doc, footer_text, doc_id, w, pal):
     right = w - pad
     y = 0.46 * inch
     c.saveState()
-    c.setStrokeColor(pal["border"]); c.setLineWidth(0.5)
+    c.setStrokeColor(pal["border"])
+    c.setLineWidth(0.5)
     c.line(pad, y + 0.18 * inch, right, y + 0.18 * inch)
-    c.setFillColor(pal["accent"]); c.rect(pad, y + 0.18 * inch, 0.32 * inch, 0.012 * inch, stroke=0, fill=1)
-    c.setFillColor(pal["muted"]); c.setFont("Helvetica", 7.4)
+    c.setFillColor(pal["accent"])
+    c.rect(pad, y + 0.18 * inch, 0.32 * inch, 0.012 * inch, stroke=0, fill=1)
+    c.setFillColor(pal["muted"])
+    c.setFont("Helvetica", 7.4)
     c.drawString(pad, y, doc_id)
     c.drawCentredString(w / 2, y, footer_text[:120])
-    c.setFillColor(pal["ink"]); c.setFont("Helvetica-Bold", 7.6)
+    c.setFillColor(pal["ink"])
+    c.setFont("Helvetica-Bold", 7.6)
     c.drawRightString(right, y, f"Page {doc.page}")
     c.restoreState()
 
@@ -405,7 +437,8 @@ def page_drawer(cfg, pal, first_page, cover_first):
         draw_watermark(c, w, h, cfg["watermark"])
         if first_page:
             if cover_first:
-                draw_footer(c, doc, cfg["footer"], cfg["doc_id"], w, pal); return
+                draw_footer(c, doc, cfg["footer"], cfg["doc_id"], w, pal)
+                return
             draw_letterhead_band(c, cfg["meta"], w, h, pal, cfg["logo"])
         else:
             draw_compact_header(c, cfg["title"], cfg["doc_id"], w, h, pal, cfg["logo"])
@@ -434,7 +467,7 @@ def cover_flowables(cfg, styles, available, pal) -> List[Any]:
 
     meta = cfg["meta"][:3]
     if meta:
-        row = [[field(l, v) for l, v in meta]]
+        row = [[field(label, value) for label, value in meta]]
         cw = (available * 0.9) / len(meta)
         chip = Table(row, colWidths=[cw] * len(meta), hAlign="CENTER")
         chip.setStyle(TableStyle([
