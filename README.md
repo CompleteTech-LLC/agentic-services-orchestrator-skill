@@ -39,17 +39,21 @@ flowchart LR
   B --> J{Risk or approval gate}
   J -->|Sensitive data, credentials, billing, launch, send, proof| K[Security review / approval check]
   K -->|Blocked or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
-  K -->|Approved within limits| C
+  K -->|Approved within limits| M[Final approved copy / release package]
+  C -->|No open gates| M
   G -->|New scope or failed assumption| E
   F -->|Dispute or missing authority| L
   I -->|Recipient/public-use risk| J
   L --> B
+  M -->|New change or reopened approval| B
   classDef source fill:#eef6ff,stroke:#3778c2,color:#102a43;
   classDef gate fill:#fff7e6,stroke:#c97a12,color:#3d2600;
   classDef output fill:#eefaf0,stroke:#2f8f46,color:#12351d;
+  classDef final fill:#e8fff4,stroke:#15803d,color:#052e16;
   class A source;
   class B,J,K,L gate;
   class C,D,E,F,G,H,I output;
+  class M final;
 ```
 
 ## What It Does
