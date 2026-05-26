@@ -7,6 +7,14 @@ metadata:
   openclaw:
     skillKey: agentic-services-orchestrator-skill
     homepage: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill
+    requires:
+      bins:
+        - python3
+    install:
+      - kind: uv
+        package: reportlab>=4.0
+      - kind: uv
+        package: pyyaml>=6.0
 ---
 
 # Agentic Services Orchestrator Skill
