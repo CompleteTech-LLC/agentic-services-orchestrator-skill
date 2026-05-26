@@ -44,3 +44,22 @@ Worked example of the CompleteTech LLC agentic services lifecycle for one engage
 - Discovery facts are not a proposal; a proposal is not a contract; a contract does not authorize launch.
 - Case studies, testimonials, and named references require verified client approval.
 - Certificates require verified recipient/course facts and are not delivery acceptance or public proof.
+
+## 5. Messy Real-World Scenario
+
+During delivery, Northwind asks whether the pilot can recommend refunds. The signed scope excludes refund decisions, so the orchestrator keeps the current delivery track inside the approved support-triage scope and opens two parallel draft-only tracks.
+
+| Track | Status | Owner | Blocker |
+|---|---|---|---|
+| Delivery | Active | CompleteTech delivery lead | Launch waits on retention policy |
+| Security review | Blocked | TBD | Security contact and refund-policy risk unknown |
+| Change order | Draft only | CompleteTech engagement lead | Commercial approval for refund recommendations missing |
+
+The prior security approval remains conditional for the original pilot only. Refund-related delivery, billing, contract updates, and external send stay blocked until commercial, legal, billing, security, and recipient approvals are current.
+
+## 6. Recovery Action
+
+- Keep the pilot sandboxed and inside approved support-triage scope.
+- Ask the sponsor whether refund recommendations should become a formal change order.
+- Route refund data, policy access, and tool permissions to security review before any implementation.
+- Mark any expanded-scope approval as `requested` or `conditional`, never approved, until evidence names the approver and permitted action.

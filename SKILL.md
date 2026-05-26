@@ -19,20 +19,24 @@ For the complete architecture, per-skill responsibility matrix, handoff schema, 
 
 ## Lifecycle Model
 
-Discovery -> Proposal -> Contract -> Delivery -> Customer Success.
+Default lifecycle: Discovery -> Proposal -> Contract -> Delivery -> Customer Success.
+
+Real engagements may move forward, loop backward, skip a stage, reopen an approval, split into parallel tracks, stall, or branch into change-order work. Treat the lifecycle as a state map, not a strict pipeline.
 
 Supporting outputs: Invoice, Certificate, Case Study, Email, Envelope.
 
-Overlay/gate: Security Review.
+Overlay/gate: Security Review. Security can interrupt any track before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, public proof, or incident response.
 
 ## Routing Logic
 
-1. Classify intent: create artifact, route work, continue workflow, package/send outputs, review risk, collect missing facts, or approve a transition.
-2. Identify lifecycle stage and current state from explicit user context, existing artifacts, or prior handoff notes.
-3. Select the earliest missing lifecycle artifact unless the user requests a specific support output.
-4. Invoke security review before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, or public proof.
-5. Use email only for message drafting and sequences. Use envelope only for packaging, recipients, attachments, filenames, metadata, and delivery-readiness.
-6. Return a handoff package with artifact paths, decisions, unresolved questions, blockers, approvals, next owner, and next recommended skill.
+1. Classify intent: create, revise, continue, route, package, send, review, approve, escalate, recover, archive, or start a new workstream.
+2. Identify current state from explicit user context, active tracks, existing artifacts, prior handoff notes, approval history, blockers, due dates, and known conflicts.
+3. Decide whether the request is forward progress, backward rework, a skipped-stage exception, a reopened approval, a continuation, a revision, an escalation, a packaging task, or a parallel workstream.
+4. Check artifact versions before creating anything new. Revise, supersede, fork, archive, or reference the existing artifact when that is the cleaner state transition.
+5. Route by lifecycle stage, requested outcome, risk level, urgency, missing facts, approval state, duplicate-work risk, dependencies, and specialist ownership.
+6. Invoke security review before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, public proof, or incident response.
+7. Use email only for message drafting and sequences. Use envelope only for packaging, recipients, attachments, filenames, metadata, and delivery-readiness.
+8. Return a handoff package with artifact paths, version relationships, decisions, unresolved questions, blockers, approvals, next owner, next decision needed, and next recommended skill.
 
 ## Skill Invocation Rules
 
@@ -71,21 +75,112 @@ project_state:
   client: TBD
   workflow: TBD
   lifecycle_stage: discovery|proposal|contract|delivery|customer_success
+  workflow_status: draft|active|stalled|blocked|in_review|approved|launched|closed|reopened|superseded
+  active_tracks:
+    - track: TBD
+      stage: discovery|proposal|contract|delivery|customer_success|support_output|security_review
+      status: draft|active|blocked|waiting|complete|superseded
+      owner: TBD
+      dependencies: []
+      blockers: []
+      due_date: TBD
   requested_outcome: TBD
+  urgency: normal
+  owner: TBD
+  due_dates: {}
   source_artifacts: []
+  artifact_versions:
+    - artifact: TBD
+      path: TBD
+      version: v1
+      status: draft|current|superseded|archived|forked
+      supersedes: TBD
+      source_artifacts: []
   known_facts: {}
+  assumptions: []
+  conflicts: []
   missing_info: []
+  dependencies: []
   blockers: []
   approvals:
-    commercial: unknown
-    legal_or_contract: unknown
-    security: unknown
-    external_send: unknown
-    public_proof: unknown
+    commercial:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    legal_or_contract:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    security:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    external_send:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    public_proof:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+  approval_history: []
+  decision_log: []
   security_flags: []
+  rollback_or_recovery_action: TBD
+  next_decision_needed: TBD
   next_skill: TBD
   downstream_handoff: TBD
 ```
+
+Approval status meanings: `unknown` means no evidence; `draft` means not ready for approval; `requested` means waiting on an approver; `partial` means only some scope or action is approved; `approved` means the listed action is permitted; `rejected` means do not proceed; `expired` means prior approval is no longer valid; `superseded` means a newer artifact or decision replaced it; `blocked` means a gate prevents action; `conditional` means proceed only within listed limits.
+
+## Non-Linear and Parallel Work
+
+- Forward progress: move to the next dependency only when required approvals and source artifacts are current.
+- Backward loop: route delivery-discovered scope, changed assumptions, or failed acceptance back to discovery, proposal, or change-order work.
+- Skipped stage: allow only when the user provides verified equivalent facts and record the skipped-stage rationale in `decision_log`.
+- Reopened approval: mark the old approval `superseded` or `expired`, record why it reopened, and stop external action until the new approval is clear.
+- Stalled work: keep the track open with owner, blocker, due date, and smallest useful recovery action.
+- Parallel tracks: proposal, security review, technical discovery, stakeholder outreach, billing prep, and delivery planning may run at the same time only when each track has explicit dependencies, blockers, owner, and allowed output state.
+- Multiple active tracks: update the shared `project_state` after each specialist result and name what changed for downstream tracks.
+
+## Exception Handling
+
+- Missing facts: ask targeted questions when the fact gates action; otherwise insert `TBD`, continue draft-only work, and record the missing fact.
+- Conflicting facts: stop the affected track, list the conflict, identify the likely source of truth, and ask for a decision.
+- Partial approval: proceed only with the permitted scope and record remaining blockers before downstream work.
+- Client scope change: route to proposal or change-order work before delivery expands scope.
+- Stakeholder unavailable: assign a fallback owner if known, draft the next safe artifact, and record the decision or approval that is waiting.
+- Security blocker: stop launch, credential use, external tool action, public proof, or external send; route to security review with required evidence.
+- Billing dispute: stop invoice send or payment request; route to invoice/customer-success context and preserve contract/SOW references without inventing terms.
+- Delivery uncovers new scope: keep current delivery inside approved scope and open a new discovery/proposal/change-order track.
+- Boundary-crossing request: route to the owning specialist and return a handoff instead of creating the artifact in the orchestrator.
+- Contradictory instructions: stop the affected action, summarize the contradiction, and ask for the source of truth.
+
+## Artifact and Version Discipline
+
+Before creating an artifact, check whether an existing artifact should be revised, superseded, forked, archived, or referenced. Handoffs must identify source artifacts, current version, superseded versions, fork reason, approval impact, and whether downstream artifacts need refresh. Do not create parallel artifacts with the same purpose unless there is a recorded fork reason.
+
+## Escalation and Recovery
+
+Escalate or stop when there is legal uncertainty, sensitive data exposure, credential risk, production impact, public proof risk, payment/billing ambiguity, client authority ambiguity, contradictory instructions, or any approval that is rejected, blocked, expired, or outside its permitted action.
+
+When blocked, return the smallest useful next action: targeted questions, required evidence, suggested owner, fallback path, draft-only artifact, safe partial output, or rollback/recovery step.
 
 ## Common Workflows
 
@@ -95,16 +190,19 @@ project_state:
 4. Post-launch support: delivery support record -> customer success health/renewal -> invoice for retainer/overage if approved.
 5. Proof creation: delivery evidence -> customer success approver/timing -> case study -> security/anonymization gate -> email approval request.
 6. Training certificate: certificate -> envelope package if mailed -> email delivery message if sent digitally.
+7. Messy scope change: delivery finds new workflow -> keep current delivery bounded -> open proposal/change-order track -> run security review in parallel -> update contract/invoice only after approval.
+8. Reopened launch approval: security blocker appears after conditional approval -> mark prior approval superseded -> stop launch/external actions -> route to security review -> resume only inside the new permitted scope.
 
 ## Operating Pattern
 
-1. Identify the lifecycle stage and current missing artifact.
-2. Route to the most specific specialist skill.
+1. Identify lifecycle stage, active tracks, current artifact versions, missing facts, dependencies, blockers, conflicts, approvals, owner, urgency, and next decision needed.
+2. Route to the most specific specialist skill or open a parallel track when dependencies allow it.
 3. Pass a compact `project_state` object plus artifact-specific inputs.
-4. Preserve facts, assumptions, blockers, approvals, and open questions during handoff.
+4. Preserve facts, assumptions, blockers, approvals, approval history, decision log, source artifacts, and open questions during handoff.
 5. Use `TBD` for unknowns instead of filling gaps.
 6. Stop at the appropriate approval gate before public use, legal commitment, invoice issuance, production launch, external communication, packaging/sending, or proof publication.
-7. After a specialist returns output, update `project_state` and name the next skill or blocker.
+7. If blocked, return the smallest useful recovery action instead of trying to complete the unsafe or underspecified work.
+8. After a specialist returns output, update `project_state`, artifact versions, active tracks, decisions, and the next skill or blocker.
 
 ## Unresolved Questions
 

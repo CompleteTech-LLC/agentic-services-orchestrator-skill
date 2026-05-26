@@ -26,20 +26,28 @@ Part of the CompleteTech LLC agentic services skill library. This skill coordina
 
 ```mermaid
 flowchart LR
-  A[Request or client stage] --> B{Primary need}
-  B -->|Scope| C[Discovery]
-  B -->|Sell| D[Email and proposal]
-  B -->|Approve| E[Contract and invoice]
-  B -->|Build| F[Delivery and security]
-  B -->|Operate| G[Customer success]
-  B -->|Prove or certify| H[Case study or certificate]
-  C --> D --> E --> F --> G --> H
+  A[Request, artifact, or client change] --> B{Orchestrator state router}
+  B --> C[Active tracks]
+  C --> D[Discovery]
+  C --> E[Proposal or change order]
+  C --> F[Contract and invoice]
+  C --> G[Delivery]
+  C --> H[Customer success]
+  C --> I[Support outputs: email, envelope, proof, certificate]
+  B --> J{Risk or approval gate}
+  J -->|Sensitive data, credentials, billing, launch, send, proof| K[Security review / approval check]
+  K -->|Blocked or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
+  K -->|Approved within limits| C
+  G -->|New scope or failed assumption| E
+  F -->|Dispute or missing authority| L
+  I -->|Recipient/public-use risk| J
+  L --> B
   classDef source fill:#eef6ff,stroke:#3778c2,color:#102a43;
   classDef gate fill:#fff7e6,stroke:#c97a12,color:#3d2600;
   classDef output fill:#eefaf0,stroke:#2f8f46,color:#12351d;
   class A source;
-  class B gate;
-  class C,D,E,F,G,H output;
+  class B,J,K,L gate;
+  class C,D,E,F,G,H,I output;
 ```
 
 ## What It Does

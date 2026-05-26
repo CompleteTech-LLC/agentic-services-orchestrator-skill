@@ -2,13 +2,13 @@
 
 ## 1. Executive Summary
 
-The library should operate as one service-delivery system. `agentic-services-orchestrator-skill` owns lifecycle state, routing, sequencing, handoff contracts, missing-info handling, approval gates, duplicate-work prevention, and plugin selection. Specialist skills perform bounded business functions. Support skills provide reusable communication, packaging, proof, billing, certificate, and risk-review capabilities.
+The library should operate as one service-delivery system. `agentic-services-orchestrator-skill` owns lifecycle state, routing, sequencing, handoff contracts, missing-info handling, approval gates, duplicate-work prevention, artifact version discipline, exception handling, recovery actions, and plugin selection. Specialist skills perform bounded business functions. Support skills provide reusable communication, packaging, proof, billing, certificate, and risk-review capabilities.
 
-The lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Success. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Security Review is an overlay/gate that can interrupt any stage.
+The default lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Success. Real work may loop backward, skip a stage with verified substitute facts, reopen approvals, stall, split into parallel tracks, or branch into a change order. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Security Review is an overlay/gate that can interrupt any stage or active track.
 
 ## 2. Final Architecture
 
-- Orchestrator: central workflow manager, state owner, router, gatekeeper, and handoff normalizer.
+- Orchestrator: central workflow manager, state owner, router, gatekeeper, exception handler, recovery planner, and handoff normalizer.
 - Lifecycle skills: discovery, proposal, contract, delivery, customer success.
 - Support skills: invoice, certificate, case study, email, envelope.
 - Overlay/gate skill: security review.
@@ -35,11 +35,13 @@ The lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Succe
 Routing order:
 
 1. Honor explicit user target if it is safe and has required inputs.
-2. If target is unclear, infer lifecycle stage from artifacts and requested outcome.
-3. Select the earliest missing lifecycle artifact before downstream outputs.
-4. Add support skills only for a concrete job: email for copy, envelope for packaging, invoice for billing, certificate for attendance, case study for proof.
-5. Run security review before risky transitions.
-6. Return next skill, output artifacts, blockers, and missing facts.
+2. If target is unclear, infer lifecycle stage from artifacts, active tracks, requested outcome, approval state, and blockers.
+3. Decide whether the request is forward progress, backward rework, skipped-stage exception, reopened approval, continuation, revision, escalation, packaging, or a new workstream.
+4. Select the earliest missing lifecycle artifact before downstream outputs unless the user requested a specific support output or a safe parallel track can proceed.
+5. Add support skills only for a concrete job: email for copy, envelope for packaging, invoice for billing, certificate for attendance, case study for proof.
+6. Run security review before risky transitions.
+7. Check artifact versions before creating a new artifact; revise, supersede, fork, archive, or reference existing work when appropriate.
+8. Return next skill, output artifacts, version relationships, blockers, missing facts, owner, next decision needed, and recovery action.
 
 Handoff schema:
 
@@ -48,33 +50,136 @@ project_state:
   client: TBD
   workflow: TBD
   lifecycle_stage: discovery|proposal|contract|delivery|customer_success
+  workflow_status: draft|active|stalled|blocked|in_review|approved|launched|closed|reopened|superseded
   intent: create|revise|package|send|review|approve|handoff
+  active_tracks:
+    - track: TBD
+      stage: discovery|proposal|contract|delivery|customer_success|support_output|security_review
+      status: draft|active|blocked|waiting|complete|superseded
+      owner: TBD
+      dependencies: []
+      blockers: []
+      due_date: TBD
   source_artifacts: []
+  artifact_versions:
+    - artifact: TBD
+      path: TBD
+      version: v1
+      status: draft|current|superseded|archived|forked
+      supersedes: TBD
+      source_artifacts: []
   known_facts: {}
   assumptions: []
+  conflicts: []
   missing_info: []
+  dependencies: []
   blockers: []
+  urgency: normal|elevated|urgent
+  owner: TBD
+  due_dates: {}
   approvals:
-    commercial: unknown
-    legal_or_contract: unknown
-    security: unknown
-    external_send: unknown
-    public_proof: unknown
+    commercial:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    legal_or_contract:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    security:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    external_send:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+    public_proof:
+      status: unknown|draft|requested|partial|approved|rejected|expired|superseded|blocked|conditional
+      approved_by: TBD
+      approved_at: TBD
+      evidence: TBD
+      permits: []
+      remaining_blockers: []
+  approval_history: []
+  decision_log: []
   security_flags: []
   generated_outputs: []
+  rollback_or_recovery_action: TBD
+  next_decision_needed: TBD
   next_skill: TBD
   next_action: TBD
 ```
 
 Failure modes:
 
-- Missing required facts: ask targeted questions or insert `TBD`.
-- Conflicting facts: stop and ask for source of truth.
+- Missing required facts: ask targeted questions when the fact gates action; otherwise insert `TBD`, continue draft-only work, and record the missing fact.
+- Conflicting facts: stop the affected track, record the conflict, identify the likely source of truth, and ask for a decision.
 - Unsafe request: route to security review or require human approval.
-- Duplicate artifact: revise the existing artifact instead of creating a parallel one.
+- Duplicate artifact: revise, supersede, fork, archive, or reference the existing artifact instead of creating a parallel one.
 - Downstream request before upstream approval: produce a draft only and record the blocker.
+- Partial approval: proceed only with the permitted scope and record remaining blockers.
+- Client scope change: route to proposal or change-order work before delivery expands scope.
+- Stakeholder unavailable: assign a fallback owner if known, continue safe draft work, and record the waiting decision.
+- Security blocker: stop launch, credential use, external tool action, public proof, or external send until security review returns a permitted path.
+- Billing dispute: stop invoice send or payment request and route through invoice/customer-success context.
+- Delivery discovers new scope: keep delivery inside approved scope and open a new discovery/proposal/change-order track.
+- Boundary-crossing request: route to the owning specialist and return a handoff instead of authoring the artifact in the orchestrator.
 
-## 5. Plugin-Weaving Model
+## 5. Real-World Operating Model
+
+The orchestrator treats the engagement as a set of active tracks sharing one state object:
+
+- Lifecycle track: discovery, proposal, contract, delivery, customer success.
+- Risk track: security review, permission changes, credentials, data handling, launch blockers, incident response.
+- Commercial track: proposal, change order, contract, invoice, payment/request readiness.
+- Communication track: email drafts, follow-ups, approval requests, recipient routing.
+- Packaging track: envelope, attachment inventory, filenames, delivery-readiness.
+- Proof/certificate track: case study, approved quotes, anonymization, training certificates.
+
+Tracks may run in parallel when each track has explicit dependencies, owner, due date, blocker list, allowed output state, and approval limits. Parallel work must not let a downstream artifact imply approval that has not happened.
+
+Non-linear transitions:
+
+- Forward progress: move when source artifacts and approvals are current.
+- Backward loop: return to discovery/proposal/change-order when assumptions fail or scope changes.
+- Skipped stage: require verified substitute facts and record the reason.
+- Reopened approval: mark the prior approval `superseded` or `expired`, record why, and stop actions outside the new approval.
+- Stalled track: preserve owner, blocker, due date, and recovery action.
+- Forked track: allow only when separate scopes, audiences, or approvals make one artifact unsafe or confusing.
+
+Approval states:
+
+| Status | Meaning |
+| --- | --- |
+| unknown | No reliable approval evidence exists. |
+| draft | Artifact or decision is not ready for approval. |
+| requested | Approval has been requested and is pending. |
+| partial | Only a subset of scope, action, or recipients is approved. |
+| approved | The listed action is permitted by the named approver/evidence. |
+| rejected | Do not proceed with the requested action. |
+| expired | A prior approval is no longer valid. |
+| superseded | A newer artifact or decision replaced the prior approval. |
+| blocked | A gate prevents action until a blocker is cleared. |
+| conditional | Proceed only within the listed limits and remaining blockers. |
+
+Escalate or stop when there is legal uncertainty, sensitive data exposure, credential risk, production impact, public proof risk, payment/billing ambiguity, client authority ambiguity, contradictory instructions, or any approval that is rejected, blocked, expired, or outside its permitted action.
+
+When blocked, return the smallest useful next action: targeted questions, required evidence, suggested owner, fallback path, draft-only artifact, safe partial output, or rollback/recovery step.
+
+## 6. Plugin-Weaving Model
 
 - GitHub: code/repo artifacts, issue/PR workflows, CI evidence, commit/push tasks.
 - Gmail: mailbox context, thread summaries, reply drafting, recipient history; sending requires explicit approval.
@@ -84,9 +189,9 @@ Failure modes:
 
 The orchestrator chooses plugins, but specialist skills may request them through the handoff when their artifact needs external context or production output.
 
-## 6. Deduplication and Centralization Recommendations
+## 7. Deduplication and Centralization Recommendations
 
-- Move lifecycle routing, sequencing, state, and duplicate prevention to the orchestrator.
+- Move lifecycle routing, sequencing, state, active-track coordination, duplicate prevention, artifact version policy, and recovery planning to the orchestrator.
 - Move email subject/body/CTA/sequences to email.
 - Move recipients, filenames, attachment manifests, delivery-readiness, and physical mailing envelope PDFs to envelope.
 - Move sensitive data, confidentiality, compliance, tool permission, external action, launch, and public-proof gates to security review.
@@ -94,21 +199,21 @@ The orchestrator chooses plugins, but specialist skills may request them through
 - Keep renderer/template selection inside each specialist; centralize only the handoff contract.
 - Avoid repeating full boundary paragraphs in every skill; each skill should state only local ownership and what it returns.
 
-## 7. Final Cleaned Instruction Set: Orchestrator
+## 8. Final Cleaned Instruction Set: Orchestrator
 
 Use the orchestrator when a request spans more than one skill or stage. It must:
 
 1. Build or update `project_state`.
-2. Classify stage, intent, missing facts, approvals, blockers, and risk flags.
-3. Route to the right lifecycle skill or support skill.
+2. Classify stage, intent, active tracks, missing facts, approvals, blockers, urgency, dependencies, conflicts, and risk flags.
+3. Route to the right lifecycle skill, support skill, security review, or safe parallel track.
 4. Pass only relevant context to each specialist.
 5. Convert outputs into downstream inputs.
-6. Prevent duplicate work by checking existing artifacts first.
+6. Prevent duplicate work by checking existing artifacts and version relationships first.
 7. Invoke security review at every risk gate.
 8. Use email only for communication copy and envelope only for packaging/delivery-readiness.
-9. Return artifact paths, decisions, missing info, approval status, and next step.
+9. Return artifact paths, version relationships, decisions, missing info, approval status/history, next decision needed, recovery action, and next step.
 
-## 8. Final Cleaned Instruction Outlines
+## 9. Final Cleaned Instruction Outlines
 
 - Discovery: collect verified pre-sale workflow facts; output proposal-ready handoff and risk flags; do not draft final commercial/legal artifacts.
 - Proposal: turn verified facts into buyer-facing scope; output contract/invoice/delivery-ready scope; do not own legal terms, billing, or send packaging.
@@ -122,7 +227,7 @@ Use the orchestrator when a request spans more than one skill or stage. It must:
 - Envelope: package artifacts for delivery; output envelope PDFs, attachment manifests, filenames, recipients, and readiness notes; do not author artifact content.
 - Security Review: assess risk, permissions, sensitive data, external actions, and launch/proof gates; output blockers/signoff/residual risks; do not claim formal certification.
 
-## 9. Example Workflows
+## 10. Example Workflows
 
 Lead to proposal:
 
@@ -164,7 +269,27 @@ Training certificate:
 2. Envelope packages physical mailing if needed.
 3. Email drafts digital delivery note if needed.
 
-## 10. Open Questions
+Messy scope change with parallel tracks:
+
+1. Delivery is active for the approved support-triage pilot.
+2. Client asks to include refund recommendations, which is outside approved scope and raises higher risk.
+3. Orchestrator keeps current delivery inside the original approval and opens a change-order proposal track.
+4. Security review starts in parallel for refund data, policy access, tool permissions, human approval gates, and prohibited actions.
+5. Customer success drafts stakeholder routing and confirms who can approve commercial and security decisions.
+6. Proposal produces a draft change order with `TBD` for any unverified price, authority, or acceptance term.
+7. Prior launch approval is marked conditional/superseded for the expanded scope; launch remains blocked for refund-related functionality.
+8. Contract/invoice/envelope/email tracks remain draft-only until commercial, legal, billing, security, and external-send approvals are current.
+9. Handoff returns active tracks, blockers, source artifacts, superseded approvals, next owner, and the next decision needed.
+
+Billing dispute during delivery:
+
+1. Invoice has been drafted for a milestone, but the client disputes whether acceptance occurred.
+2. Orchestrator blocks invoice send and routes to delivery for acceptance evidence.
+3. Customer success receives an account-risk note and suggested stakeholder owner.
+4. Invoice revises only after acceptance or commercial approval is clarified.
+5. Email may draft a neutral status note, but external send remains blocked until recipient and send approval are verified.
+
+## 11. Open Questions
 
 - Should `agentic-case-study-skill` be renamed `agentic-proof-skill` to match its broader proof-asset role?
 - Should approval gates be stored in a shared machine-readable file, such as `references/approval-gates.yaml`, for reuse by email, envelope, invoice, case study, and security review?
