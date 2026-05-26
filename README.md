@@ -4,11 +4,11 @@
   <img src="assets/logo.png" alt="CompleteTech LLC logo" width="260">
 </p>
 
-A CompleteTech LLC Codex skill for routing multi-stage agentic services work across the specialist skill library.
+A schema-driven Codex workflow orchestrator with a CompleteTech LLC agentic services adapter as the default workflow.
 
 ## About
 
-Part of the CompleteTech LLC agentic services skill library. This skill coordinates lifecycle routing across specialist skills without replacing their templates, guardrails, or approval boundaries.
+Part of the CompleteTech LLC agentic services skill library. This skill coordinates workflow routing without replacing specialist templates, guardrails, or approval boundaries. The core is universal: it loads a workflow definition, updates `project_state`, routes by policy, logs events, validates state, and then returns final output or a recovery path. The CompleteTech services lifecycle remains the built-in/default adapter.
 
 ## OpenClaw / ClawHub Metadata
 
@@ -28,50 +28,52 @@ Source: [assets/diagrams/orchestration-workflow.mmd](assets/diagrams/orchestrati
 
 ```mermaid
 flowchart LR
-  A[Request, artifact, or client change] --> B{Orchestrator state router}
-  B --> C[Active tracks]
-  C --> D[Discovery]
-  C --> E[Proposal or change order]
-  C --> F[Contract and invoice]
-  C --> G[Delivery]
-  C --> H[Customer success]
-  C --> I[Support outputs: email, envelope, proof, certificate]
-  B --> J{Approval / risk triage}
-  J -->|No gate needed| M[Final approved copy / release package]
-  J -->|Commercial, legal, billing, send, proof| N[Applicable owner approval]
-  J -->|Sensitive data, credentials, production, incident| K[Security review]
-  N -->|Blocked, rejected, or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
-  N -->|Approved within limits| M
-  K -->|Blocked, rejected, or conditional| L
-  K -->|Approved within limits| M
-  C -->|No open gates| M
-  G -->|New scope or failed assumption| E
-  F -->|Dispute or missing authority| L
-  I -->|Recipient/public-use risk| J
-  L --> B
+  A[Request, artifact, or client change] --> B[Load workflow definition / adapter]
+  B --> C[Update project_state]
+  C --> D{Route by policy}
+  D --> E[Active tracks]
+  E --> F[Specialist or adapter action]
+  F --> G{Approval / risk triage}
+  G -->|No gate needed| H[Event log]
+  G -->|Owner approval needed| I[Applicable owner approval]
+  G -->|Security-sensitive| J[Security review]
+  I -->|Approved within limits| H
+  J -->|Approved within limits| H
+  I -->|Blocked, rejected, or conditional| K[Recovery action: questions, evidence, owner, draft-only output]
+  J -->|Blocked, rejected, or conditional| K
+  H --> L{Validate state}
+  L -->|Valid final state| M[Final approved copy / release package]
+  L -->|Invalid transition, stale approval, conflict, or missing owner| K
+  K --> C
   M -->|New change or reopened approval| B
   classDef source fill:#eef6ff,stroke:#3778c2,color:#102a43;
   classDef gate fill:#fff7e6,stroke:#c97a12,color:#3d2600;
   classDef output fill:#eefaf0,stroke:#2f8f46,color:#12351d;
   classDef final fill:#e8fff4,stroke:#15803d,color:#052e16;
   class A source;
-  class B,J,K,L,N gate;
-  class C,D,E,F,G,H,I output;
+  class D,G,I,J,K,L gate;
+  class B,C,E,F,H output;
   class M final;
 ```
 
 ## What It Does
 
-- Chooses and sequences the right CompleteTech agentic specialist skill.
+- Loads workflow schemas and adapters from `references/`.
+- Uses `references/completetech-services-workflow.yaml` as the default CompleteTech services adapter.
+- Chooses and sequences the right specialist, owner, or adapter action based on policy and `project_state`.
 - Keeps specialist boundaries clear across discovery, email, proposal, contract, invoice, delivery, security review, customer success, proof, and certificate work.
-- Preserves facts and open questions during handoff.
-- Stops at approval gates before public use, legal commitment, invoice issuance, production launch, external communication, or proof publication.
+- Preserves facts, events, approvals, blockers, artifacts, and open questions during handoff.
+- Treats security review as optional and only for security-sensitive gates; commercial, legal, billing, recipient, proof, and client-authority gates stay with their owners.
 
 ## Contents
 
 - `SKILL.md` - orchestration instructions, routing guide, boundary rules, and common multi-skill workflows.
 - `agents/openai.yaml` - OpenAI agent metadata.
 - `assets/diagrams/orchestration-workflow.mmd` - Mermaid source for the orchestration workflow diagram.
+- `references/workflow-definition-schema.yaml` - universal workflow adapter schema and validation rules.
+- `references/completetech-services-workflow.yaml` - default CompleteTech services workflow adapter.
+- `references/hiring-pipeline-workflow.yaml` - small non-services adapter example.
+- `references/orchestration-architecture.md` - universal architecture, adapter model, responsibility matrix, and examples.
 - `scripts/render_pdf.py` - branded CompleteTech PDF generator (Markdown -> PDF + optional PNG preview).
 - `requirements.txt` - Python dependencies for branded PDF rendering.
 

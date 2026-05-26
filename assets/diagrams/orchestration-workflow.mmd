@@ -1,31 +1,27 @@
 flowchart LR
-  A[Request, artifact, or client change] --> B{Orchestrator state router}
-  B --> C[Active tracks]
-  C --> D[Discovery]
-  C --> E[Proposal or change order]
-  C --> F[Contract and invoice]
-  C --> G[Delivery]
-  C --> H[Customer success]
-  C --> I[Support outputs: email, envelope, proof, certificate]
-  B --> J{Approval / risk triage}
-  J -->|No gate needed| M[Final approved copy / release package]
-  J -->|Commercial, legal, billing, send, proof| N[Applicable owner approval]
-  J -->|Sensitive data, credentials, production, incident| K[Security review]
-  N -->|Blocked, rejected, or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
-  N -->|Approved within limits| M
-  K -->|Blocked, rejected, or conditional| L
-  K -->|Approved within limits| M
-  C -->|No open gates| M
-  G -->|New scope or failed assumption| E
-  F -->|Dispute or missing authority| L
-  I -->|Recipient/public-use risk| J
-  L --> B
+  A[Request, artifact, or client change] --> B[Load workflow definition / adapter]
+  B --> C[Update project_state]
+  C --> D{Route by policy}
+  D --> E[Active tracks]
+  E --> F[Specialist or adapter action]
+  F --> G{Approval / risk triage}
+  G -->|No gate needed| H[Event log]
+  G -->|Owner approval needed| I[Applicable owner approval]
+  G -->|Security-sensitive| J[Security review]
+  I -->|Approved within limits| H
+  J -->|Approved within limits| H
+  I -->|Blocked, rejected, or conditional| K[Recovery action: questions, evidence, owner, draft-only output]
+  J -->|Blocked, rejected, or conditional| K
+  H --> L{Validate state}
+  L -->|Valid final state| M[Final approved copy / release package]
+  L -->|Invalid transition, stale approval, conflict, or missing owner| K
+  K --> C
   M -->|New change or reopened approval| B
   classDef source fill:#eef6ff,stroke:#3778c2,color:#102a43;
   classDef gate fill:#fff7e6,stroke:#c97a12,color:#3d2600;
   classDef output fill:#eefaf0,stroke:#2f8f46,color:#12351d;
   classDef final fill:#e8fff4,stroke:#15803d,color:#052e16;
   class A source;
-  class B,J,K,L,N gate;
-  class C,D,E,F,G,H,I output;
+  class D,G,I,J,K,L gate;
+  class B,C,E,F,H output;
   class M final;

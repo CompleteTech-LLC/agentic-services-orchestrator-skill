@@ -14,6 +14,9 @@ Real engagements may loop backward, skip stages with verified substitute facts, 
 
 ```yaml
 workflow_generation:
+  workflow_type: completetech_services
+  workflow_definition: references/completetech-services-workflow.yaml
+  workflow_schema: references/workflow-definition-schema.yaml
   workflow_id: ADW-NORTHWIND-2026-001
   workflow_name: Customer Support Email Triage Agent
   lifecycle_stage: discovery
@@ -181,6 +184,45 @@ workflow_generation:
     - security contact email
     - retention policy for ticket excerpts
     - sponsor decision on refund recommendation scope
+
+  events:
+    - event_id: EVT-2026-0001
+      type: track_started
+      actor: CompleteTech engagement lead
+      timestamp: 2026-06-09T09:00:00-04:00
+      related_artifact: DEL-2026-0233
+      related_track: TRACK-DELIVERY-001
+      decision: keep approved delivery track active
+      evidence: ADSA-2026-0142 and PRO-2026-0188
+      notes: support-triage pilot remains inside approved scope
+    - event_id: EVT-2026-0002
+      type: scope_changed
+      actor: Jordan Lee
+      timestamp: 2026-06-09T10:15:00-04:00
+      related_artifact: CHG-2026-0004
+      related_track: TRACK-CHANGE-ORDER-001
+      decision: open draft-only refund recommendation change-order track
+      evidence: sponsor request during delivery review
+      notes: refund recommendations are outside signed scope
+    - event_id: EVT-2026-0003
+      type: recovery_action_selected
+      actor: CompleteTech engagement lead
+      timestamp: 2026-06-09T10:30:00-04:00
+      related_artifact: SEC-2026-0090
+      related_track: TRACK-SECURITY-001
+      decision: keep pilot sandboxed and request missing security evidence
+      evidence: retention policy and security contact missing
+      notes: no refund tools, external sends, or production launch until gates are current
+
+  state_transitions:
+    - from: delivery
+      to: proposal
+      when: delivery uncovered refund recommendation scope outside approved pilot
+      rationale: CompleteTech adapter routes new scope to proposal/change-order before delivery expansion
+    - from: delivery
+      to: security_review
+      when: refund-policy data and tool permissions may introduce security-sensitive risk
+      rationale: approval/risk triage selected security review for the expanded scope only
 
   provider:
     legal_name: CompleteTech LLC
@@ -562,9 +604,9 @@ workflow_generation:
     envelope_pdf: agentic_envelope_skill/assets/examples/example.pdf
 ```
 
-## Messy Real-World Scenario
+## Messy Real-World Scenario: CompleteTech Adapter
 
-The Northwind pilot is no longer treated as a clean pipeline. Delivery is active for the approved support-triage scope, security is blocked on retention/contact facts, and a separate draft change-order track is open because the sponsor asked whether the workflow can recommend refunds. The orchestrator keeps delivery inside the signed scope, allows draft-only proposal/security work in parallel, and blocks contract, invoice, launch, external send, and refund-related delivery until commercial, legal, billing, security, and recipient approvals are current.
+The Northwind pilot is an instance of the `completetech_services` adapter. It is no longer treated as a clean pipeline. Delivery is active for the approved support-triage scope, security is blocked on retention/contact facts, and a separate draft change-order track is open because the sponsor asked whether the workflow can recommend refunds. The orchestrator keeps delivery inside the signed scope, allows draft-only proposal/security work in parallel, and blocks contract, invoice, launch, external send, and refund-related delivery until commercial, legal, billing, security, and recipient approvals are current.
 
 Handoff summary:
 
@@ -584,6 +626,44 @@ project_state:
   rollback_or_recovery_action: keep pilot sandboxed; do not enable refund tools or external sends
   next_decision_needed: sponsor confirms whether refund recommendation work should become a formal change order
   next_skill: agentic-proposal-skill and agentic-security-review-skill in parallel
+```
+
+## Second Domain Example: Hiring Pipeline
+
+This is not a CompleteTech services workflow. It shows how another adapter can reuse the same primitives without changing `SKILL.md`.
+
+```yaml
+workflow_type: hiring_pipeline
+workflow_definition: references/hiring-pipeline-workflow.yaml
+project_state:
+  stage: interview
+  active_tracks:
+    - track_id: TRACK-CANDIDATE-001
+      stage: interview
+      status: active
+      owner: hiring manager
+      dependencies:
+        - completed scorecard
+        - compensation range approval
+      blockers:
+        - second interviewer feedback missing
+  artifacts:
+    - artifact_type: interview_scorecard
+      version: v2
+      status: current
+      source_artifacts:
+        - role_brief_v1
+        - candidate_profile_v1
+  gates:
+    hiring_manager_approval.status: requested
+    compensation_approval.status: blocked
+    privacy_or_security_review.status: not_applicable
+  events:
+    - type: blocker_added
+      actor: recruiter
+      related_track: TRACK-CANDIDATE-001
+      notes: compensation approval missing before offer package
+  next_decision_needed: confirm compensation range before offer artifact is final
 ```
 
 ## Variable Ownership By Skill

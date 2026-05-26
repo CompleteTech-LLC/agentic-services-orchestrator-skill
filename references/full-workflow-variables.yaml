@@ -2,6 +2,9 @@
 # Source: references/full-workflow-variables.md
 
 workflow_generation:
+  workflow_type: completetech_services
+  workflow_definition: references/completetech-services-workflow.yaml
+  workflow_schema: references/workflow-definition-schema.yaml
   workflow_id: ADW-NORTHWIND-2026-001
   workflow_name: Customer Support Email Triage Agent
   lifecycle_stage: discovery
@@ -163,6 +166,43 @@ workflow_generation:
   - security contact email
   - retention policy for ticket excerpts
   - sponsor decision on refund recommendation scope
+  events:
+  - event_id: EVT-2026-0001
+    type: track_started
+    actor: CompleteTech engagement lead
+    timestamp: 2026-06-09T09:00:00-04:00
+    related_artifact: DEL-2026-0233
+    related_track: TRACK-DELIVERY-001
+    decision: keep approved delivery track active
+    evidence: ADSA-2026-0142 and PRO-2026-0188
+    notes: support-triage pilot remains inside approved scope
+  - event_id: EVT-2026-0002
+    type: scope_changed
+    actor: Jordan Lee
+    timestamp: 2026-06-09T10:15:00-04:00
+    related_artifact: CHG-2026-0004
+    related_track: TRACK-CHANGE-ORDER-001
+    decision: open draft-only refund recommendation change-order track
+    evidence: sponsor request during delivery review
+    notes: refund recommendations are outside signed scope
+  - event_id: EVT-2026-0003
+    type: recovery_action_selected
+    actor: CompleteTech engagement lead
+    timestamp: 2026-06-09T10:30:00-04:00
+    related_artifact: SEC-2026-0090
+    related_track: TRACK-SECURITY-001
+    decision: keep pilot sandboxed and request missing security evidence
+    evidence: retention policy and security contact missing
+    notes: no refund tools, external sends, or production launch until gates are current
+  state_transitions:
+  - from: delivery
+    to: proposal
+    when: delivery uncovered refund recommendation scope outside approved pilot
+    rationale: CompleteTech adapter routes new scope to proposal/change-order before delivery expansion
+  - from: delivery
+    to: security_review
+    when: refund-policy data and tool permissions may introduce security-sensitive risk
+    rationale: approval/risk triage selected security review for the expanded scope only
   provider:
     legal_name: CompleteTech LLC
     trade_name: CompleteTech LLC

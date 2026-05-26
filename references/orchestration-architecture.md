@@ -2,13 +2,17 @@
 
 ## 1. Executive Summary
 
-The library should operate as one service-delivery system. `agentic-services-orchestrator-skill` owns lifecycle state, routing, sequencing, handoff contracts, missing-info handling, approval gates, duplicate-work prevention, artifact version discipline, exception handling, recovery actions, and plugin selection. Specialist skills perform bounded business functions. Support skills provide reusable communication, packaging, proof, billing, certificate, and risk-review capabilities.
+The library should operate as a schema-driven workflow orchestration system. `agentic-services-orchestrator-skill` owns workflow definition loading, lifecycle state, routing, sequencing, handoff contracts, missing-info handling, approval gates, duplicate-work prevention, artifact version discipline, event logging, state validation, exception handling, recovery actions, and plugin selection. Specialist skills perform bounded business functions. Support skills provide reusable communication, packaging, proof, billing, certificate, and risk-review capabilities.
 
-The default lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Success. Real work may loop backward, skip a stage with verified substitute facts, reopen approvals, stall, split into parallel tracks, or branch into a change order. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Approval/risk triage decides whether a track needs no gate, owner approval, specialist review, or security review. Security Review is one overlay/gate, not the default gate for every workflow.
+The universal core uses generic primitives: `workflow_type`, `stage`, `track`, `artifact`, `actor/owner`, `decision`, `gate`, `dependency`, `event`, `state_transition`, and `recovery_action`. The default adapter is `references/completetech-services-workflow.yaml`, which preserves Discovery -> Proposal -> Contract -> Delivery -> Customer Success plus support outputs. Other domains can be represented by new workflow definition adapters without rewriting `SKILL.md`.
+
+The default CompleteTech lifecycle may loop backward, skip a stage with verified substitute facts, reopen approvals, stall, split into parallel tracks, or branch into a change order. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Approval/risk triage decides whether a track needs no gate, owner approval, specialist review, or security review. Security Review is one overlay/gate, not the default gate for every workflow.
 
 ## 2. Final Architecture
 
-- Orchestrator: central workflow manager, state owner, router, gatekeeper, exception handler, recovery planner, and handoff normalizer.
+- Orchestrator: central workflow definition loader, state owner, router, gatekeeper, validator, exception handler, recovery planner, and handoff normalizer.
+- Workflow schema: `references/workflow-definition-schema.yaml`, defining configurable stages, transitions, artifacts, owners, gates, approval states, routing rules, recovery actions, required fields, terminal states, events, and validation rules.
+- Default adapter: `references/completetech-services-workflow.yaml`, encoding CompleteTech services stages, support outputs, specialist ownership, gates, and routing rules.
 - Lifecycle skills: discovery, proposal, contract, delivery, customer success.
 - Support skills: invoice, certificate, case study, email, envelope.
 - Overlay/gate skill: security review for security-sensitive work; other gates stay with commercial, legal, billing, recipient, proof, or client-authority owners.
@@ -34,21 +38,27 @@ The default lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Custom
 
 Routing order:
 
-1. Honor explicit user target if it is safe and has required inputs.
-2. If target is unclear, infer lifecycle stage from artifacts, active tracks, requested outcome, approval state, and blockers.
-3. Decide whether the request is forward progress, backward rework, skipped-stage exception, reopened approval, continuation, revision, escalation, packaging, or a new workstream.
-4. Select the earliest missing lifecycle artifact before downstream outputs unless the user requested a specific support output or a safe parallel track can proceed.
-5. Add support skills only for a concrete job: email for copy, envelope for packaging, invoice for billing, certificate for attendance, case study for proof.
-6. Run approval/risk triage before risky transitions; route to security review only for security-sensitive triggers.
-7. Check artifact versions before creating a new artifact; revise, supersede, fork, archive, or reference existing work when appropriate.
-8. Return next skill, output artifacts, version relationships, blockers, missing facts, owner, next decision needed, and recovery action.
+1. Load the workflow definition using `project_state.workflow_type`; default to `completetech_services`.
+2. Honor explicit user target if it is safe, permitted by the adapter, and has required inputs.
+3. If target is unclear, infer stage/track from artifacts, active tracks, requested outcome, approval state, events, and blockers.
+4. Decide whether the request is forward progress, backward rework, skipped-stage exception, reopened approval, continuation, revision, escalation, packaging, validation, or a new workstream.
+5. Select the next action using adapter `allowed_transitions`, `routing_rules`, `required_fields`, `gates`, and `specialist_owners`.
+6. Add support skills only for a concrete job: email for copy, envelope for packaging, invoice for billing, certificate for attendance, case study for proof.
+7. Run approval/risk triage before risky transitions; route to security review only for security-sensitive triggers.
+8. Check artifact versions before creating a new artifact; revise, supersede, fork, archive, or reference existing work when appropriate.
+9. Append event-log entries for material state changes.
+10. Validate state before final output, terminal state, or external action.
+11. Return next skill, output artifacts, version relationships, blockers, missing facts, owner, latest events, next decision needed, and recovery action.
 
 Handoff schema:
 
 ```yaml
 project_state:
+  workflow_type: completetech_services
+  workflow_definition: references/completetech-services-workflow.yaml
   client: TBD
   workflow: TBD
+  stage: discovery|proposal|contract|delivery|customer_success
   lifecycle_stage: discovery|proposal|contract|delivery|customer_success
   workflow_status: draft|active|stalled|blocked|in_review|approved|launched|closed|reopened|superseded
   intent: create|revise|package|send|review|approve|handoff
@@ -117,6 +127,21 @@ project_state:
   decision_log: []
   security_flags: []
   generated_outputs: []
+  events:
+    - event_id: TBD
+      type: artifact_created|artifact_revised|approval_requested|approval_changed|blocker_added|blocker_removed|scope_changed|owner_changed|decision_recorded|track_started|track_closed|recovery_action_selected
+      actor: TBD
+      timestamp: TBD
+      related_artifact: TBD
+      related_track: TBD
+      decision: TBD
+      evidence: TBD
+      notes: TBD
+  state_transitions:
+    - from: TBD
+      to: TBD
+      when: TBD
+      rationale: TBD
   rollback_or_recovery_action: TBD
   next_decision_needed: TBD
   next_skill: TBD
@@ -140,9 +165,9 @@ Failure modes:
 
 ## 5. Real-World Operating Model
 
-The orchestrator treats the engagement as a set of active tracks sharing one state object:
+The orchestrator treats the engagement or workflow as a set of active tracks sharing one state object:
 
-- Lifecycle track: discovery, proposal, contract, delivery, customer success.
+- Lifecycle track: adapter-defined stages, such as discovery, proposal, contract, delivery, customer success for CompleteTech services.
 - Risk track: approval/risk triage, security review when needed, permission changes, credentials, data handling, launch blockers, incident response, and non-security approval gates.
 - Commercial track: proposal, change order, contract, invoice, payment/request readiness.
 - Communication track: email drafts, follow-ups, approval requests, recipient routing.
@@ -179,7 +204,58 @@ Escalate or stop when there is legal uncertainty, sensitive data exposure, crede
 
 When blocked, return the smallest useful next action: targeted questions, required evidence, suggested owner, fallback path, draft-only artifact, safe partial output, or rollback/recovery step.
 
-## 6. Plugin-Weaving Model
+## 6. Event Log and Validation
+
+Append event entries when the workflow materially changes: `artifact_created`, `artifact_revised`, `approval_requested`, `approval_changed`, `blocker_added`, `blocker_removed`, `scope_changed`, `owner_changed`, `decision_recorded`, `track_started`, `track_closed`, and `recovery_action_selected`.
+
+Validate state using `references/workflow-definition-schema.yaml` before final output, terminal state, or external action. The validator guidance covers invalid transitions, missing owners, orphaned blockers, stale approvals, artifacts without source/version, gates bypassed without rationale, unresolved conflicts, terminal states reached with open blockers, and external actions without approval evidence.
+
+## 7. Adapter Examples
+
+CompleteTech services adapter:
+
+```yaml
+workflow_type: completetech_services
+stages: [discovery, proposal, contract, delivery, customer_success]
+support_outputs: [invoice, certificate, case_study, email, envelope]
+default_adapter: references/completetech-services-workflow.yaml
+```
+
+Hiring pipeline adapter example:
+
+```yaml
+workflow_type: hiring_pipeline
+stages: [role_intake, sourcing, screening, interview, offer, onboarding]
+artifacts: [role_brief, candidate_profile, interview_scorecard, offer_package]
+gates:
+  - hiring_manager_approval
+  - compensation_approval
+  - legal_or_hr_approval
+  - privacy_or_security_review
+routing_rules:
+  - route candidate data/privacy concerns to privacy_or_security_review
+  - route compensation or offer changes to compensation_approval
+  - return failed scorecard assumptions to screening or role_intake
+```
+
+Software release adapter example:
+
+```yaml
+workflow_type: software_release
+stages: [intake, implementation, review, test, release, post_release]
+artifacts: [issue, branch, pull_request, test_report, release_notes]
+gates:
+  - code_review
+  - ci_status
+  - release_owner_approval
+  - security_review
+routing_rules:
+  - route failed CI back to implementation
+  - route public release notes to release_owner_approval
+  - route dependency/security findings to security_review
+```
+
+## 8. Plugin-Weaving Model
 
 - GitHub: code/repo artifacts, issue/PR workflows, CI evidence, commit/push tasks.
 - Gmail: mailbox context, thread summaries, reply drafting, recipient history; sending requires explicit approval.
@@ -189,7 +265,7 @@ When blocked, return the smallest useful next action: targeted questions, requir
 
 The orchestrator chooses plugins, but specialist skills may request them through the handoff when their artifact needs external context or production output.
 
-## 7. Deduplication and Centralization Recommendations
+## 9. Deduplication and Centralization Recommendations
 
 - Move lifecycle routing, sequencing, state, active-track coordination, duplicate prevention, artifact version policy, and recovery planning to the orchestrator.
 - Move email subject/body/CTA/sequences to email.
@@ -199,21 +275,22 @@ The orchestrator chooses plugins, but specialist skills may request them through
 - Keep renderer/template selection inside each specialist; centralize only the handoff contract.
 - Avoid repeating full boundary paragraphs in every skill; each skill should state only local ownership and what it returns.
 
-## 8. Final Cleaned Instruction Set: Orchestrator
+## 10. Final Cleaned Instruction Set: Orchestrator
 
 Use the orchestrator when a request spans more than one skill or stage. It must:
 
-1. Build or update `project_state`.
-2. Classify stage, intent, active tracks, missing facts, approvals, blockers, urgency, dependencies, conflicts, and risk flags.
-3. Route to the right lifecycle skill, support skill, security review, or safe parallel track.
+1. Load the workflow definition and build or update `project_state`.
+2. Classify workflow type, stage, intent, active tracks, missing facts, approvals, blockers, urgency, dependencies, conflicts, and risk flags.
+3. Route to the right adapter owner, lifecycle skill, support skill, security review, or safe parallel track.
 4. Pass only relevant context to each specialist.
 5. Convert outputs into downstream inputs.
 6. Prevent duplicate work by checking existing artifacts and version relationships first.
 7. Run approval/risk triage at every gate and invoke security review only for security-sensitive gates.
 8. Use email only for communication copy and envelope only for packaging/delivery-readiness.
-9. Return artifact paths, version relationships, decisions, missing info, approval status/history, next decision needed, recovery action, and next step.
+9. Append event-log entries and validate state.
+10. Return artifact paths, version relationships, decisions, missing info, approval status/history, latest events, next decision needed, recovery action, and next step.
 
-## 9. Final Cleaned Instruction Outlines
+## 11. Final Cleaned Instruction Outlines
 
 - Discovery: collect verified pre-sale workflow facts; output proposal-ready handoff and risk flags; do not draft final commercial/legal artifacts.
 - Proposal: turn verified facts into buyer-facing scope; output contract/invoice/delivery-ready scope; do not own legal terms, billing, or send packaging.
@@ -227,7 +304,7 @@ Use the orchestrator when a request spans more than one skill or stage. It must:
 - Envelope: package artifacts for delivery; output envelope PDFs, attachment manifests, filenames, recipients, and readiness notes; do not author artifact content.
 - Security Review: assess risk, permissions, sensitive data, external actions, and launch/proof gates; output blockers/signoff/residual risks; do not claim formal certification.
 
-## 10. Example Workflows
+## 12. Example Workflows
 
 Lead to proposal:
 
@@ -289,7 +366,7 @@ Billing dispute during delivery:
 4. Invoice revises only after acceptance or commercial approval is clarified.
 5. Email may draft a neutral status note, but external send remains blocked until recipient and send approval are verified.
 
-## 11. Open Questions
+## 13. Open Questions
 
 - Should `agentic-case-study-skill` be renamed `agentic-proof-skill` to match its broader proof-asset role?
 - Should approval gates be stored in a shared machine-readable file, such as `references/approval-gates.yaml`, for reuse by email, envelope, invoice, case study, and security review?
