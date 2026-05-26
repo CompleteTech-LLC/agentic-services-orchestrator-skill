@@ -24,6 +24,10 @@ Part of the CompleteTech LLC agentic services skill library. This skill coordina
 
 ## Workflow Diagram
 
+Source: [assets/diagrams/orchestration-workflow.mmd](assets/diagrams/orchestration-workflow.mmd). Rendered PNG: [assets/diagrams/orchestration-workflow.png](assets/diagrams/orchestration-workflow.png).
+
+![Orchestration workflow diagram](assets/diagrams/orchestration-workflow.png)
+
 ```mermaid
 flowchart LR
   A[Request, artifact, or client change] --> B{Orchestrator state router}
@@ -61,6 +65,8 @@ flowchart LR
 
 - `SKILL.md` - orchestration instructions, routing guide, boundary rules, and common multi-skill workflows.
 - `agents/openai.yaml` - OpenAI agent metadata.
+- `assets/diagrams/orchestration-workflow.mmd` - Mermaid source for the orchestration workflow diagram.
+- `assets/diagrams/orchestration-workflow.png` - rendered workflow diagram for surfaces that do not render Mermaid.
 - `scripts/render_pdf.py` - branded CompleteTech PDF generator (Markdown -> PDF + optional PNG preview).
 - `requirements.txt` - Python dependencies for branded PDF rendering.
 
