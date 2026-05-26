@@ -96,7 +96,7 @@ workflow_definition_schema:
 
   validation_rules:
     - id: invalid_transition
-      description: Reject transitions not listed in allowed_transitions unless a bypass rationale is recorded.
+      description: "Reject transitions not listed in allowed_transitions. Avoid catch-all source-to-target transition pairs; model exceptions as explicit gated transitions with evidence, owner, and rationale."
     - id: missing_owner
       description: Every active track, gate, decision, recovery action, and artifact must have an owner or `TBD`.
     - id: orphaned_blocker

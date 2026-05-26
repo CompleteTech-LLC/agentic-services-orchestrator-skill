@@ -13,7 +13,7 @@ Part of the CompleteTech LLC agentic services skill library. This skill coordina
 ## OpenClaw / ClawHub Metadata
 
 - Skill key: `agentic-services-orchestrator-skill`
-- Version-ready metadata: `1.0.2`
+- Version-ready metadata: `1.0.3`
 - Homepage: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill
 - README: https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill#readme
 - Runtime binaries: `python3`

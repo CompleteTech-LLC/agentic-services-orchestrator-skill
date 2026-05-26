@@ -45,9 +45,18 @@ allowed_transitions:
   - from: interview
     to: role_intake
     when: scorecards show role requirements are unclear or changed
-  - from: any
-    to: any
-    when: explicit safe target, reopened approval, or candidate-specific exception is recorded
+  - from: offer
+    to: interview
+    when: hiring manager approval is reopened or interview evidence must be corrected before offer action
+  - from: offer
+    to: role_intake
+    when: compensation range, role requirements, or employment terms are superseded
+  - from: onboarding
+    to: offer
+    when: accepted-offer details, start date, or employment terms need approved correction
+  - from: interview
+    to: screening
+    when: candidate record correction requires re-screening evidence before interview continuation
 
 artifacts:
   - artifact_type: role_brief

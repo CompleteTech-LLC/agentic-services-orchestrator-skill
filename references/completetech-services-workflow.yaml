@@ -32,7 +32,7 @@ support_outputs:
   - envelope
 
 allowed_transitions:
-  - from: any
+  - from: discovery
     to: discovery
     when: new opportunity, unclear facts, or re-discovery is required
   - from: discovery
@@ -50,9 +50,30 @@ allowed_transitions:
   - from: delivery
     to: proposal
     when: new scope, failed assumption, or change order appears
-  - from: any
-    to: any
-    when: approval is reopened, artifact is superseded, conflict requires rework, or explicit user target is safe
+  - from: proposal
+    to: discovery
+    when: buyer facts, success criteria, systems, or authority become unclear and rediscovery is required
+  - from: contract
+    to: discovery
+    when: client identity, authority, or required source facts become unclear and rediscovery is required
+  - from: delivery
+    to: discovery
+    when: delivery evidence invalidates the original workflow facts and rediscovery is required
+  - from: customer_success
+    to: discovery
+    when: renewal, expansion, or account-change facts require rediscovery before commercial action
+  - from: contract
+    to: proposal
+    when: commercial approval is reopened, scope changes, or proposal terms are superseded
+  - from: delivery
+    to: contract
+    when: signature authority, legal terms, or kickoff authorization is reopened or superseded
+  - from: customer_success
+    to: delivery
+    when: post-launch remediation, handoff correction, or support evidence requires delivery-owner action
+  - from: customer_success
+    to: proposal
+    when: renewal, expansion, or change-order scope needs commercial approval
 
 artifacts:
   - artifact_type: discovery_brief
