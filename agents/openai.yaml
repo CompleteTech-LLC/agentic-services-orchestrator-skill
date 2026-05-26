@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $agentic-services-orchestrator-skill to choose and sequence the right CompleteTech agentic specialist skills for a multi-stage services workflow."
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

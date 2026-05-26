@@ -60,10 +60,7 @@ def run_ruff() -> None:
     if shutil.which("ruff"):
         run(["ruff", "check", "."])
         return
-    if shutil.which("uvx"):
-        run(["uvx", "ruff", "check", "."])
-        return
-    run([sys.executable, "-m", "ruff", "check", "."])
+    raise RuntimeError("ruff is required for quality validation")
 
 
 def compile_python() -> None:
@@ -91,8 +88,6 @@ def parse_structured_files() -> None:
 def mermaid_command() -> list[str] | None:
     if shutil.which("mmdc"):
         return ["mmdc"]
-    if shutil.which("npx"):
-        return ["npx", "--yes", "@mermaid-js/mermaid-cli"]
     return None
 
 
@@ -103,7 +98,7 @@ def validate_mermaid(skip: bool) -> None:
         return
     cmd = mermaid_command()
     if skip or cmd is None:
-        reason = "requested" if skip else "mmdc/npx not available"
+        reason = "requested" if skip else "mmdc not available"
         print(f"mermaid skipped: {reason}")
         return
     with tempfile.TemporaryDirectory(prefix="skill-mermaid-") as tmp:
@@ -114,21 +109,7 @@ def validate_mermaid(skip: bool) -> None:
 
 
 def smoke_generators() -> None:
-    generator_commands = {
-        "generate_certificate.py": ["--config", "config.ini", "examples/northwind_workshop.ini", "--out", "{tmp}/certificate.pdf"],
-        "generate_contract.py": [
-            "--config", "config.ini", "examples/northwind_support_triage.ini", "--out", "{tmp}/contract.pdf",
-            "--markdown-out", "{tmp}/contract.md", "--no-envelope",
-        ],
-        "generate_envelope.py": ["--config", "config.ini", "examples/northwind_address.ini", "--out", "{tmp}/envelope.pdf"],
-    }
-    with tempfile.TemporaryDirectory(prefix="skill-generator-") as tmp:
-        for path in sorted(ROOT.glob("generate_*.py")):
-            run([sys.executable, str(path), "--help"])
-            args = generator_commands.get(path.name)
-            if args:
-                run([sys.executable, str(path), *[arg.format(tmp=tmp) for arg in args]])
-    print("generator smoke ok")
+    print("generator smoke skipped: services orchestrator has no generate_*.py entry points")
 
 
 def smoke_catalog_renderers() -> None:
@@ -158,10 +139,7 @@ def run_pyright() -> None:
     if shutil.which("pyright"):
         run(["pyright"])
         return
-    if shutil.which("npx"):
-        run(["npx", "--yes", "pyright"])
-        return
-    raise RuntimeError("pyrightconfig.json exists, but pyright/npx is unavailable")
+    raise RuntimeError("pyrightconfig.json exists, but pyright is unavailable")
 
 
 def frontmatter() -> dict[str, Any]:
@@ -223,9 +201,13 @@ def publish_candidate_files(patterns: list[str]) -> list[Path]:
     return sorted(files)
 
 
+def package_name(spec: str) -> str:
+    return re.split(r"[<>=!~]", spec, 1)[0].strip().lower()
+
+
 def assert_dependency(openclaw: dict[str, Any], package: str) -> None:
     installs = openclaw.get("install") or []
-    packages = {str(item.get("package", "")).split(">=", 1)[0].lower() for item in installs if isinstance(item, dict)}
+    packages = {package_name(str(item.get("package", ""))) for item in installs if isinstance(item, dict)}
     if package.lower() not in packages:
         raise RuntimeError(f"metadata.openclaw.install must declare {package}")
 

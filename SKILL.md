@@ -2,7 +2,7 @@
 name: agentic-services-orchestrator-skill
 description: >-
   Coordinate schema-driven workflows across configurable domains using workflow definitions, adapters, active tracks, artifact versions, approval/risk triage, event logs, validation, and recovery actions. Use the CompleteTech LLC agentic services workflow as the default adapter for discovery, proposal, contract, delivery, customer success, invoice, certificate, case study, email, envelope, and security-review work.
-version: 1.0.1
+version: 1.0.2
 metadata:
   openclaw:
     skillKey: agentic-services-orchestrator-skill
@@ -12,9 +12,13 @@ metadata:
         - python3
     install:
       - kind: uv
-        package: reportlab>=4.0
+        package: reportlab==4.5.1
       - kind: uv
-        package: pyyaml>=6.0
+        package: pyyaml==6.0.3
+      - kind: uv
+        package: pypdfium2==5.8.0
+      - kind: uv
+        package: pillow==12.2.0
 ---
 
 # Agentic Services Orchestrator Skill
@@ -28,6 +32,16 @@ For the complete architecture, per-skill responsibility matrix, handoff schema, 
 ## System Boundary
 
 This skill owns workflow definition loading, routing policy, project state, event logging, validation, recovery selection, and specialist handoff coordination. It does not author specialist artifacts directly, replace generator scripts, approve commercial/legal/billing/security decisions, or change another skill's business logic. Use adapter definitions to add new workflow domains without rewriting this file.
+
+## Runtime Permissions
+
+This skill is a local workflow-orchestration and document-rendering workflow. It reads bundled workflow definitions, schemas, references, examples, Mermaid sources, `assets/logo.png`, and user-provided project-state/workflow facts. It writes only user-selected PDF/PNG/Markdown artifact paths when `scripts/render_pdf.py` is explicitly run.
+
+It does not send emails, call external workflow systems, call Mautic or other CRMs, contact certificate services, require credential access, create persistence, escalate privileges, perform destructive file operations, or run background services.
+
+## Network Boundary
+
+This skill is local-only. It does not include outbound network helpers, callbacks, receipt helpers, telemetry submission, CRM integrations, or any helper that posts orchestration run metadata to an external service.
 
 ## Universal Workflow Model
 
@@ -279,14 +293,4 @@ python3 scripts/render_pdf.py \
   --meta "DOCUMENT NO.=ORCH-2026-001" --meta "DATE=2026-05-24"
 ```
 
-`scripts/render_pdf.py` applies the shared CompleteTech branding (logo, cover page, letterhead band, watermark, footer) and supports a Markdown subset: `#`/`##`/`###` headings, paragraphs, `-` bullet lists, tables, `>` callouts, `**bold**`, and `[PAGE_BREAK]`. It requires `reportlab`; the optional `--png` preview montage requires `pypdfium2` and `pillow`. See `assets/examples/` for a rendered example.
-
-## Certificate Receipt Guidance
-
-The skill remains usable without a classroom key. When certificate credit is needed, use `scripts/request_receipt.py` after the skill run. The shared class key is provided through `CT_CERT_COMPLETION_KEY`, `--completion-key`, or a registry profile; the website claim form receives only the generated receipt code.
-
-Receipt requests include this skill ID: `agentic-services-orchestrator-skill`. The helper sends class/session IDs, the shared key, skill version, generated run ID, optional artifact hash, and metadata to `https://cert.complete.tech/api/skill-runs`. The student claims the certificate at `https://cert.complete.tech/claim` with the returned receipt.
-
-For `agentic-services-orchestrator-skill`, collect at least three prerequisite receipt codes and pass `--prerequisite-receipt` once per code, or use `--prerequisite-receipts-file`. The backend rejects orchestration receipts without three distinct valid prerequisite skill receipts.
-
-Do not print, store, or commit real classroom completion keys.
+`scripts/render_pdf.py` applies the shared CompleteTech branding (logo, cover page, letterhead band, watermark, footer) and supports a Markdown subset: `#`/`##`/`###` headings, paragraphs, `-` bullet lists, tables, `>` callouts, `**bold**`, and `[PAGE_BREAK]`. It requires `reportlab==4.5.1`; the optional `--png` preview montage requires `pypdfium2==5.8.0` and `pillow==12.2.0`. See `assets/examples/` for a rendered example.
