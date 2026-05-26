@@ -4,31 +4,31 @@
 
 The library should operate as one service-delivery system. `agentic-services-orchestrator-skill` owns lifecycle state, routing, sequencing, handoff contracts, missing-info handling, approval gates, duplicate-work prevention, artifact version discipline, exception handling, recovery actions, and plugin selection. Specialist skills perform bounded business functions. Support skills provide reusable communication, packaging, proof, billing, certificate, and risk-review capabilities.
 
-The default lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Success. Real work may loop backward, skip a stage with verified substitute facts, reopen approvals, stall, split into parallel tracks, or branch into a change order. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Security Review is an overlay/gate that can interrupt any stage or active track.
+The default lifecycle is Discovery -> Proposal -> Contract -> Delivery -> Customer Success. Real work may loop backward, skip a stage with verified substitute facts, reopen approvals, stall, split into parallel tracks, or branch into a change order. Invoice, Certificate, Case Study, Email, and Envelope are supporting outputs. Approval/risk triage decides whether a track needs no gate, owner approval, specialist review, or security review. Security Review is one overlay/gate, not the default gate for every workflow.
 
 ## 2. Final Architecture
 
 - Orchestrator: central workflow manager, state owner, router, gatekeeper, exception handler, recovery planner, and handoff normalizer.
 - Lifecycle skills: discovery, proposal, contract, delivery, customer success.
 - Support skills: invoice, certificate, case study, email, envelope.
-- Overlay/gate skill: security review.
+- Overlay/gate skill: security review for security-sensitive work; other gates stay with commercial, legal, billing, recipient, proof, or client-authority owners.
 - Plugins: used by the orchestrator or support skills only when they materially complete a workflow, such as GitHub for repo work, Gmail for mailbox context, Canva for branded design, spreadsheet tools for tabular client/project tracking, and document/PDF generators for artifacts.
 
 ## 3. Skill Responsibility Matrix
 
 | Skill | Purpose | Orchestrator invokes when | Required inputs | Optional inputs | Outputs | Upstream | Downstream | Shared skills/plugins | Gates | Must not own | Centralize/remove |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| discovery | Convert opportunity into verified workflow facts. | New lead, unclear scope, readiness unknown, proposal facts missing. | client/workflow, stakeholders, pain, systems, goals, constraints. | budget, timeline, data/tool notes, examples. | intake, workflow map, readiness, success criteria, proposal handoff. | email, customer request. | proposal, security, customer success. | email for recap; security for risk. | sensitive data, excluded use, unclear approval path. | Final proposal, contract, invoice, launch approval. | lifecycle routing, security gates, email copy. |
-| proposal | Create buyer-facing commercial scope. | Discovery facts are sufficient for pilot/SOW/proposal/change order. | verified facts, scope, deliverables, acceptance criteria, price/terms if known. | proof snippets, roadmap, risk plan. | proposal, SOW, evaluation plan, assumptions/exclusions. | discovery, customer success, delivery change request. | contract, invoice, email, envelope. | security for risk; case study for approved proof only. | claims, regulated use, unapproved proof, pricing authority. | Legal terms, billing doc, delivery execution. | orchestration, email cover text, envelope packaging. |
+| discovery | Convert opportunity into verified workflow facts. | New lead, unclear scope, readiness unknown, proposal facts missing. | client/workflow, stakeholders, pain, systems, goals, constraints. | budget, timeline, data/tool notes, examples. | intake, workflow map, readiness, success criteria, proposal handoff. | email, customer request. | proposal, approval triage, customer success. | email for recap; security only for security-sensitive risk. | sensitive data, excluded use, unclear approval path. | Final proposal, contract, invoice, launch approval. | lifecycle routing, approval triage, email copy. |
+| proposal | Create buyer-facing commercial scope. | Discovery facts are sufficient for pilot/SOW/proposal/change order. | verified facts, scope, deliverables, acceptance criteria, price/terms if known. | proof snippets, roadmap, risk plan. | proposal, SOW, evaluation plan, assumptions/exclusions. | discovery, customer success, delivery change request. | contract, invoice, email, envelope. | approval triage; security only for security-sensitive risk; case study for approved proof only. | claims, regulated use, unapproved proof, pricing authority. | Legal terms, billing doc, delivery execution. | orchestration, email cover text, envelope packaging. |
 | contract | Generate agreement package from approved terms. | Proposal/SOW is approved or user requests contract artifact. | legal parties, signatories, effective date, services summary, fees, terms source. | watermark/branding, output paths. | contract PDF/Markdown package. | proposal, human-approved terms. | invoice, envelope, email, delivery. | envelope for mailing; email for cover note. | legal approval, signature authority, unknown terms. | Scope negotiation, invoice issuance, packaging policy. | envelope ownership and lifecycle routing. |
-| delivery | Produce execution artifacts after approval. | Work is approved and needs kickoff, status, evaluation, launch, handoff, support, closeout. | approved scope, timeline, owners, access needs, deliverables, acceptance criteria. | risks, logs, test examples, support terms. | project plan, trackers, status, evaluation, runbook, closeout. | contract/proposal, security. | customer success, invoice, case study, email. | security for launch; email for updates. | production launch, external actions, access changes. | Commercial scope, account renewal, public proof. | security gates, email drafts, billing. |
+| delivery | Produce execution artifacts after approval. | Work is approved and needs kickoff, status, evaluation, launch, handoff, support, closeout. | approved scope, timeline, owners, access needs, deliverables, acceptance criteria. | risks, logs, test examples, support terms. | project plan, trackers, status, evaluation, runbook, closeout. | contract/proposal, approval triage. | customer success, invoice, case study, email. | security for security-sensitive launch risk; email for updates. | production launch, external actions, access changes. | Commercial scope, account renewal, public proof. | approval/security gates, email drafts, billing. |
 | customer success | Maintain relationship/account state. | Post-contact, active delivery, support, renewal, expansion, risk, advocacy. | client, contacts, routing, commitments, success criteria, account stage. | health score, renewal date, support items. | account profile, contact map, health score, QBR, renewal/expansion brief. | discovery, delivery, support. | case study, invoice, proposal, email. | email for outreach; case study for advocacy. | contact approval, escalation, billing/security concerns. | Delivery execution, public proof content. | orchestration state, email copy. |
 | invoice | Draft billing documents. | Deposit, milestone, retainer, change order, support, credit, receipt, or payment request is needed. | client/provider, amount, terms, line items, invoice number, due date, contract/SOW ref. | taxes, discounts, payments, notes. | invoice, credit memo, receipt, payment request. | proposal, contract, delivery, customer success. | envelope, email, customer success. | envelope for mailing; email for send note. | billing approval, tax/accounting review, payment instructions. | Pricing rationale, legal terms, collections strategy. | lifecycle routing, email copy, envelope packaging. |
 | certificate | Generate attendance certificate PDFs. | Verified training/workshop attendance certificate is requested. | recipient name, recipient email, certificate title. | issue date override, signatory, config override. | certificate PDF/path. | delivery/training record, user-provided facts. | envelope, email, customer success. | envelope/email for delivery. | identity/attendance verification. | Delivery acceptance, public proof. | routing, packaging, email. |
 | case study | Package approved proof. | Outcomes are verified and proof/testimonial/story is requested. | approved facts, outcomes, attribution permission, confidentiality constraints. | quotes, metrics, proof snippets, channel. | case study, testimonial draft, proof library, anonymization checklist. | delivery, customer success. | email, proposal proof reuse, website/social. | security for anonymization; email for approval/share. | client approval, confidentiality, public proof. | Account management, delivery evidence creation. | security/anonymization gates, email drafts. |
 | email | Draft communication. | Any workflow needs outbound/inbound copy, cover note, sequence, approval ask, or follow-up. | audience, stage, artifact summary, CTA, tone, verified recipient/routing. | prior messages, objections, proof snippets. | email draft/sequence. | any lifecycle/support skill. | envelope/send workflow, human approval. | Gmail only with explicit mailbox need. | external send approval, recipient verification. | Proposals, contracts, invoices, delivery records, proof facts. | artifact routing, packaging, state. |
 | envelope | Package and address deliverables. | Outputs need mailing, attachment inventory, filename/recipient metadata, delivery-readiness, or envelope PDF. | sender, recipient, mailing address or recipient metadata, artifacts/attachments. | attention line, postage text, return-address toggle, filenames. | envelope PDF, package manifest, delivery-readiness checklist. | contract, invoice, certificate, proposal, case study. | email/send, human approval, archive. | email for digital send; security for sensitive package. | recipient verification, sensitive attachments. | Business content of artifacts or email copy. | artifact generation, lifecycle routing. |
-| security review | Review risk and approvals. | Sensitive data, credentials, tools, integrations, external actions, billing, launch, public proof, incident, or permission changes appear. | workflow, data classes, tools, permissions, external actions, approval gates, logs, rollback. | provider/model config, retention, dependencies. | risk intake, permission inventory, launch blocker list, signoff memo. | any stage. | orchestrator decision, delivery, email, envelope, customer success. | technical/security plugins as needed. | launch, external send/action, public proof, credentials. | Legal certification, formal pen test claim. | duplicated risk gates in other skills. |
+| security review | Review security-sensitive risk and approvals. | Sensitive data, credentials, security-sensitive tools/integrations, production-impacting external actions, launch risk, public proof confidentiality, incidents, or permission changes appear. | workflow, data classes, tools, permissions, external actions, approval gates, logs, rollback. | provider/model config, retention, dependencies. | risk intake, permission inventory, launch blocker list, signoff memo. | approval/risk triage. | orchestrator decision, delivery, email, envelope, customer success. | technical/security plugins as needed. | security-sensitive launch, external tool action, public proof confidentiality, credentials. | Legal certification, billing approval, commercial approval, formal pen test claim. | duplicated risk gates in other skills. |
 
 ## 4. Orchestrator Routing and Handoff Model
 
@@ -39,7 +39,7 @@ Routing order:
 3. Decide whether the request is forward progress, backward rework, skipped-stage exception, reopened approval, continuation, revision, escalation, packaging, or a new workstream.
 4. Select the earliest missing lifecycle artifact before downstream outputs unless the user requested a specific support output or a safe parallel track can proceed.
 5. Add support skills only for a concrete job: email for copy, envelope for packaging, invoice for billing, certificate for attendance, case study for proof.
-6. Run security review before risky transitions.
+6. Run approval/risk triage before risky transitions; route to security review only for security-sensitive triggers.
 7. Check artifact versions before creating a new artifact; revise, supersede, fork, archive, or reference existing work when appropriate.
 8. Return next skill, output artifacts, version relationships, blockers, missing facts, owner, next decision needed, and recovery action.
 
@@ -127,7 +127,7 @@ Failure modes:
 
 - Missing required facts: ask targeted questions when the fact gates action; otherwise insert `TBD`, continue draft-only work, and record the missing fact.
 - Conflicting facts: stop the affected track, record the conflict, identify the likely source of truth, and ask for a decision.
-- Unsafe request: route to security review or require human approval.
+- Unsafe request: route to the applicable approval owner, specialist, or security review; require human approval when authority is unclear.
 - Duplicate artifact: revise, supersede, fork, archive, or reference the existing artifact instead of creating a parallel one.
 - Downstream request before upstream approval: produce a draft only and record the blocker.
 - Partial approval: proceed only with the permitted scope and record remaining blockers.
@@ -143,7 +143,7 @@ Failure modes:
 The orchestrator treats the engagement as a set of active tracks sharing one state object:
 
 - Lifecycle track: discovery, proposal, contract, delivery, customer success.
-- Risk track: security review, permission changes, credentials, data handling, launch blockers, incident response.
+- Risk track: approval/risk triage, security review when needed, permission changes, credentials, data handling, launch blockers, incident response, and non-security approval gates.
 - Commercial track: proposal, change order, contract, invoice, payment/request readiness.
 - Communication track: email drafts, follow-ups, approval requests, recipient routing.
 - Packaging track: envelope, attachment inventory, filenames, delivery-readiness.
@@ -194,7 +194,7 @@ The orchestrator chooses plugins, but specialist skills may request them through
 - Move lifecycle routing, sequencing, state, active-track coordination, duplicate prevention, artifact version policy, and recovery planning to the orchestrator.
 - Move email subject/body/CTA/sequences to email.
 - Move recipients, filenames, attachment manifests, delivery-readiness, and physical mailing envelope PDFs to envelope.
-- Move sensitive data, confidentiality, compliance, tool permission, external action, launch, and public-proof gates to security review.
+- Move sensitive data, confidentiality, compliance, credential, tool-permission, production-impact, and incident gates to security review. Keep commercial, legal, billing, recipient, client-authority, and routine proof approvals with their owning specialists or approvers.
 - Keep lifecycle skills focused on business artifacts and handoff facts.
 - Keep renderer/template selection inside each specialist; centralize only the handoff contract.
 - Avoid repeating full boundary paragraphs in every skill; each skill should state only local ownership and what it returns.
@@ -209,7 +209,7 @@ Use the orchestrator when a request spans more than one skill or stage. It must:
 4. Pass only relevant context to each specialist.
 5. Convert outputs into downstream inputs.
 6. Prevent duplicate work by checking existing artifacts and version relationships first.
-7. Invoke security review at every risk gate.
+7. Run approval/risk triage at every gate and invoke security review only for security-sensitive gates.
 8. Use email only for communication copy and envelope only for packaging/delivery-readiness.
 9. Return artifact paths, version relationships, decisions, missing info, approval status/history, next decision needed, recovery action, and next step.
 

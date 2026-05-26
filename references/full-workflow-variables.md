@@ -1,14 +1,14 @@
 # Full Workflow Generation Variables
 
-This reference defines the canonical variable set for generating a complete CompleteTech LLC agentic services workflow from first discovery through proposal, contract, invoice, delivery, security review, customer success, proof, certificate, email, and envelope packaging.
+This reference defines the canonical variable set for generating a complete CompleteTech LLC agentic services workflow from first discovery through proposal, contract, invoice, delivery, approval/risk triage, customer success, proof, certificate, email, and envelope packaging.
 
 Use this file as the orchestrator's shared source of truth when passing context between skills. Individual skills should receive only the subset they need, but variable names should stay stable across the workflow.
 
 ## Lifecycle Coverage
 
-Default path: Discovery -> Proposal -> Contract -> Invoice -> Delivery -> Security Review -> Customer Success -> Case Study / Proof -> Certificate -> Email -> Envelope
+Default path: Discovery -> Proposal -> Contract -> Invoice -> Delivery -> Approval/Risk Triage -> Customer Success -> Case Study / Proof -> Certificate -> Email -> Envelope
 
-Real engagements may loop backward, skip stages with verified substitute facts, reopen approvals, stall, branch into change orders, or run multiple tracks in parallel. Security Review can interrupt any stage. Email and Envelope are support utilities used whenever communication or delivery packaging is needed.
+Real engagements may loop backward, skip stages with verified substitute facts, reopen approvals, stall, branch into change orders, or run multiple tracks in parallel. Approval/risk triage can interrupt any stage and may result in no gate, owner approval, specialist review, or security review. Email and Envelope are support utilities used whenever communication or delivery packaging is needed.
 
 ## Canonical Workflow Variables
 
@@ -647,10 +647,10 @@ The orchestrator should stop and ask for clarification if any of these are missi
 1. Build `workflow_generation` from verified provider, client, opportunity, and contact facts.
 2. Generate discovery artifacts from `opportunity.*` and `discovery.*`.
 3. Generate proposal/SOW artifacts from `discovery.*`, `proposal.*`, `provider.*`, and `client.*`.
-4. Run security review when sensitive data, tools, credentials, external actions, or launch are present.
+4. Run approval/risk triage when approvals or risks are present; route to security review only for sensitive data, security-sensitive tools, credentials, production-impacting external actions, launch, incidents, or material security/compliance risk.
 5. Generate contract artifacts from approved `proposal.*`, `contract.*`, `provider.*`, and `client.*`.
 6. Generate invoice artifacts from `invoice.*`, `contract.*`, and approved commercial terms.
-7. Generate delivery artifacts from `delivery.*`, `proposal.acceptance_criteria`, `contract.*`, and security gates.
+7. Generate delivery artifacts from `delivery.*`, `proposal.acceptance_criteria`, `contract.*`, and applicable approval/security gates.
 8. Generate customer success artifacts from `customer_success.*`, delivery state, contact routing, and open commitments.
 9. Generate case study/proof only after delivery evidence and approval variables are verified.
 10. Generate certificates only from verified attendance or training variables.

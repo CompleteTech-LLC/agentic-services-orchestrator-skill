@@ -36,10 +36,14 @@ flowchart LR
   C --> G[Delivery]
   C --> H[Customer success]
   C --> I[Support outputs: email, envelope, proof, certificate]
-  B --> J{Risk or approval gate}
-  J -->|Sensitive data, credentials, billing, launch, send, proof| K[Security review / approval check]
-  K -->|Blocked or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
-  K -->|Approved within limits| M[Final approved copy / release package]
+  B --> J{Approval / risk triage}
+  J -->|No gate needed| M[Final approved copy / release package]
+  J -->|Commercial, legal, billing, send, proof| N[Applicable owner approval]
+  J -->|Sensitive data, credentials, production, incident| K[Security review]
+  N -->|Blocked, rejected, or conditional| L[Recovery action: questions, evidence, owner, draft-only output]
+  N -->|Approved within limits| M
+  K -->|Blocked, rejected, or conditional| L
+  K -->|Approved within limits| M
   C -->|No open gates| M
   G -->|New scope or failed assumption| E
   F -->|Dispute or missing authority| L
@@ -51,7 +55,7 @@ flowchart LR
   classDef output fill:#eefaf0,stroke:#2f8f46,color:#12351d;
   classDef final fill:#e8fff4,stroke:#15803d,color:#052e16;
   class A source;
-  class B,J,K,L gate;
+  class B,J,K,L,N gate;
   class C,D,E,F,G,H,I output;
   class M final;
 ```

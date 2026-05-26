@@ -25,7 +25,7 @@ Real engagements may move forward, loop backward, skip a stage, reopen an approv
 
 Supporting outputs: Invoice, Certificate, Case Study, Email, Envelope.
 
-Overlay/gate: Security Review. Security can interrupt any track before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, public proof, or incident response.
+Overlay/gate: Security Review. Security is not the default gate for every workflow; use approval/risk triage first. Route ordinary commercial, legal, billing, external-send, public-proof, and client-authority approvals to the appropriate owner or specialist. Invoke security review only when sensitive data, permissions, credentials, new tools/integrations, production launch, external tool actions, public proof confidentiality, incident response, or material security/compliance risk is involved.
 
 ## Routing Logic
 
@@ -34,7 +34,7 @@ Overlay/gate: Security Review. Security can interrupt any track before sensitive
 3. Decide whether the request is forward progress, backward rework, a skipped-stage exception, a reopened approval, a continuation, a revision, an escalation, a packaging task, or a parallel workstream.
 4. Check artifact versions before creating anything new. Revise, supersede, fork, archive, or reference the existing artifact when that is the cleaner state transition.
 5. Route by lifecycle stage, requested outcome, risk level, urgency, missing facts, approval state, duplicate-work risk, dependencies, and specialist ownership.
-6. Invoke security review before sensitive data use, new tools/integrations, external actions, production launch, payment/billing actions, credential changes, public proof, or incident response.
+6. Run approval/risk triage. Invoke security review only for security-sensitive triggers; otherwise use the relevant commercial, legal, billing, recipient, proof, or client-authority approval gate.
 7. Use email only for message drafting and sequences. Use envelope only for packaging, recipients, attachments, filenames, metadata, and delivery-readiness.
 8. Return a handoff package with artifact paths, version relationships, decisions, unresolved questions, blockers, approvals, next owner, next decision needed, and next recommended skill.
 
