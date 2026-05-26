@@ -280,3 +280,13 @@ python3 scripts/render_pdf.py \
 ```
 
 `scripts/render_pdf.py` applies the shared CompleteTech branding (logo, cover page, letterhead band, watermark, footer) and supports a Markdown subset: `#`/`##`/`###` headings, paragraphs, `-` bullet lists, tables, `>` callouts, `**bold**`, and `[PAGE_BREAK]`. It requires `reportlab`; the optional `--png` preview montage requires `pypdfium2` and `pillow`. See `assets/examples/` for a rendered example.
+
+## Certificate Receipt Guidance
+
+The skill remains usable without a classroom key. When certificate credit is needed, use `scripts/request_receipt.py` after the skill run. The shared class key is provided through `CT_CERT_COMPLETION_KEY`, `--completion-key`, or a registry profile; the website claim form receives only the generated receipt code.
+
+Receipt requests include this skill ID: `agentic-services-orchestrator-skill`. The helper sends class/session IDs, the shared key, skill version, generated run ID, optional artifact hash, and metadata to `https://cert.complete.tech/api/skill-runs`. The student claims the certificate at `https://cert.complete.tech/claim` with the returned receipt.
+
+For `agentic-services-orchestrator-skill`, collect at least three prerequisite receipt codes and pass `--prerequisite-receipt` once per code, or use `--prerequisite-receipts-file`. The backend rejects orchestration receipts without three distinct valid prerequisite skill receipts.
+
+Do not print, store, or commit real classroom completion keys.
