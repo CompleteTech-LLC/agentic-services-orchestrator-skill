@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
+import zlib
 from pathlib import Path
 
 FAMILY = "completetech-skills"
@@ -37,6 +39,46 @@ def local_file(root: Path, value: object) -> Path:
     if not resolved.is_file():
         raise ValueError(f"missing package file: {value}")
     return resolved
+
+
+def validate_png(path: Path) -> None:
+    """Check a bounded PNG chunk envelope and CRCs, not pixel decoding or artwork."""
+    limit = 16 * 1024 * 1024
+    with path.open("rb") as handle:
+        data = handle.read(limit + 1)
+    if len(data) > limit or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("logo must be a PNG of at most 16 MiB")
+    offset = 8
+    seen_header = False
+    seen_data = False
+    while offset + 12 <= len(data):
+        length = struct.unpack_from(">I", data, offset)[0]
+        kind = data[offset + 4:offset + 8]
+        end = offset + 12 + length
+        if end > len(data):
+            raise ValueError("truncated PNG chunk")
+        payload = data[offset + 8:end - 4]
+        crc = struct.unpack_from(">I", data, end - 4)[0]
+        if zlib.crc32(kind + payload) != crc:
+            raise ValueError("PNG chunk checksum mismatch")
+        if not seen_header and kind != b"IHDR":
+            raise ValueError("PNG must start with IHDR")
+        if kind == b"IHDR":
+            if seen_header or length != 13:
+                raise ValueError("invalid PNG header")
+            width, height, depth, color, compression, filtering, interlace = struct.unpack(">IIBBBBB", payload)
+            depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8), 4: (8, 16), 6: (8, 16)}
+            if not width or not height or depth not in depths.get(color, ()) or compression or filtering or interlace not in (0, 1):
+                raise ValueError("invalid PNG image parameters")
+            seen_header = True
+        elif kind == b"IDAT" and length:
+            seen_data = True
+        elif kind == b"IEND":
+            if length or not seen_data or end != len(data):
+                raise ValueError("invalid PNG end or missing image data")
+            return
+        offset = end
+    raise ValueError("PNG missing complete IHDR/IDAT/IEND structure")
 
 
 def validate(root: Path) -> list[str]:
@@ -93,9 +135,7 @@ def validate(root: Path) -> list[str]:
         for marker in NAVIGATION:
             if marker not in readme:
                 errors.append(f"README.md missing family navigation: {marker}")
-        with local_file(root, "assets/logo.png").open("rb") as handle:
-            if handle.read(8) != b"\x89PNG\r\n\x1a\n":
-                errors.append("assets/logo.png must be a PNG, not a placeholder")
+        validate_png(local_file(root, "assets/logo.png"))
         for document in ("ONBOARDING.md", "CONTRIBUTING.md"):
             text = local_file(root, document).read_text(encoding="utf-8")
             for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", text):

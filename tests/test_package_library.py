@@ -5,6 +5,8 @@ import json
 import shutil
 import sys
 import tempfile
+import struct
+import zlib
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -16,6 +18,13 @@ with patch.object(sys, "path", [str(ROOT / "scripts"), *sys.path]):
     assert spec is not None and spec.loader is not None
     library = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(library)
+
+
+def png_fixture() -> bytes:
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00")) + chunk(b"IEND", b""))
 
 
 class SkillLibraryTests(unittest.TestCase):
@@ -71,11 +80,18 @@ class SkillLibraryTests(unittest.TestCase):
             (checkout / "README.md").write_text("CompleteTech LLC Skills [Start here](ONBOARDING.md) [Contributing](CONTRIBUTING.md) assets/logo.png", encoding="utf-8")
             (checkout / "SKILL.md").write_text("---\nname: ai-usage-ledger\n---\n", encoding="utf-8")
             (checkout / "assets").mkdir()
-            (checkout / "assets/logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            (checkout / "assets/logo.png").write_bytes(png_fixture())
             (checkout / "skill-package.json").write_text(json.dumps(manifest), encoding="utf-8")
             self.assertEqual(library.audit([member], workspace), [])
             (checkout / "CONTRIBUTING.md").write_text("drift", encoding="utf-8")
             self.assertEqual(library.audit([member], workspace), ["ai-usage-ledger: shared contract drift: CONTRIBUTING.md"])
+
+    def test_duplicate_catalog_visibility_keys_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "catalog.json"
+            path.write_text('{"schema_version":1,"family":"completetech-skills","members":[{"repository":"CompleteTech-LLC/demo","skill_name":"demo","role":"demo","private":true,"private":false}]}', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
+                library.load_members(path)
 
     def test_missing_checkouts_fail_audit(self):
         members = library.load_members(ROOT / "references/skill-library.json")

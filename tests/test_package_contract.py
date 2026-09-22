@@ -4,6 +4,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import tempfile
+import struct
+import zlib
 import unittest
 from pathlib import Path
 
@@ -12,6 +14,13 @@ SPEC = importlib.util.spec_from_file_location("validate_package", MODULE)
 assert SPEC is not None and SPEC.loader is not None
 package = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(package)
+
+
+def png_fixture() -> bytes:
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00")) + chunk(b"IEND", b""))
 
 
 class PackageContractTests(unittest.TestCase):
@@ -31,7 +40,7 @@ class PackageContractTests(unittest.TestCase):
         (self.root / "SKILL.md").write_text("---\nname: example-skill\ndescription: Demo\n---\n", encoding="utf-8")
         (self.root / "README.md").write_text("\n".join(package.NAVIGATION), encoding="utf-8")
         (self.root / "assets").mkdir()
-        (self.root / "assets/logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+        (self.root / "assets/logo.png").write_bytes(png_fixture())
         self.save()
 
     def save(self):
@@ -100,6 +109,13 @@ class PackageContractTests(unittest.TestCase):
         self.assertTrue(package.validate(self.root))
         logo.unlink()
         self.assertTrue(package.validate(self.root))
+
+    def test_truncated_or_corrupted_png_rejected(self):
+        valid = png_fixture()
+        for data in (valid[:8], valid[:-12], valid + b"junk", valid[:-1] + bytes([valid[-1] ^ 1])):
+            with self.subTest(length=len(data)):
+                (self.root / "assets/logo.png").write_bytes(data)
+                self.assertTrue(package.validate(self.root))
 
     def test_frontmatter_mismatch(self):
         (self.root / "SKILL.md").write_text("---\nname: another-skill\n---\n", encoding="utf-8")

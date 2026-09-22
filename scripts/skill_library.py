@@ -8,14 +8,14 @@ import re
 import shlex
 from pathlib import Path
 
-from validate_package import FAMILY, validate
+from validate_package import FAMILY, unique_object, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 SHARED = ("scripts/validate_package.py", "tests/test_package_contract.py", "CONTRIBUTING.md", ".github/workflows/package-contract.yml")
 
 
 def load_members(path: Path, include_private: bool = False) -> list[dict]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
     if not isinstance(data, dict) or type(data.get("schema_version")) is not int or data.get("schema_version") != 1 or data.get("family") != FAMILY:
         raise ValueError("unsupported skill library catalog")
     members = data.get("members")
