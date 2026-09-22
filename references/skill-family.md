@@ -1,81 +1,74 @@
 # CompleteTech LLC Skills
 
-A coordinated library of independently usable skills, with consistent branding, onboarding and a machine-checkable package contract. This repository is the navigation and routing hub, not a replacement for specialist implementations.
+A coordinated library of independently usable skills. This repository is the navigation, routing and maintenance hub; it does not replace specialist implementations or grant approval across their boundaries.
 
-[Start with the orchestrator](../ONBOARDING.md) · [Operating instructions](../SKILL.md) · [Machine-readable catalog](skill-library.json)
+[Start here](../ONBOARDING.md) · [Branding and handoffs](../BRANDING.md) · [Maintainer instructions](../AGENTS.md) · [Catalog](skill-library.json) · [Second-pass notes](alignment-pass2.md)
 
-## Choose a skill
+## Choose the specialist
 
 | Repository | Responsibility | Access |
 |---|---|---|
-| [ai-usage-ledger-skill](https://github.com/CompleteTech-LLC/ai-usage-ledger-skill) | Usage evidence, attribution and API-equivalent costs; install key `ai-usage-ledger` | Public |
-| [agentic-services-orchestrator-skill](https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill) | Route work, preserve state and enforce the applicable approval boundaries | Public |
+| [ai-usage-ledger-skill](https://github.com/CompleteTech-LLC/ai-usage-ledger-skill) | Usage evidence and estimates; activation key `ai-usage-ledger` | Public |
+| [agentic-services-orchestrator-skill](https://github.com/CompleteTech-LLC/agentic-services-orchestrator-skill) | Route work and preserve approval-aware state | Public |
 | [agentic-discovery-skill](https://github.com/CompleteTech-LLC/agentic-discovery-skill) | Intake, readiness, scope and requirements | Public |
 | [agentic-email-skill](https://github.com/CompleteTech-LLC/agentic-email-skill) | Draft message copy and sequences, without sending | Public |
 | [agentic-proposal-skill](https://github.com/CompleteTech-LLC/agentic-proposal-skill) | Proposals, SOWs and pilot recommendations | Public |
 | [agentic-contract-skill](https://github.com/CompleteTech-LLC/agentic-contract-skill) | Agreement packages from approved terms | Public |
 | [agentic-invoice-skill](https://github.com/CompleteTech-LLC/agentic-invoice-skill) | Billing drafts from verified commercial facts | Public |
 | [agentic-delivery-skill](https://github.com/CompleteTech-LLC/agentic-delivery-skill) | Kickoff, execution, evaluation, launch and handoff | Public |
-| [agentic-security-review-skill](https://github.com/CompleteTech-LLC/agentic-security-review-skill) | Security findings, controls and relevant launch blockers | Public |
-| [agentic-customer-success-skill](https://github.com/CompleteTech-LLC/agentic-customer-success-skill) | Account health, commitments, renewal and expansion | Public |
-| [agentic-case-study-skill](https://github.com/CompleteTech-LLC/agentic-case-study-skill) | Evidence-backed proof assets with explicit approval for use | Public |
-| [agentic-envelope-skill](https://github.com/CompleteTech-LLC/agentic-envelope-skill) | Addressed envelopes, attachment manifests and packaging | Public |
-| [agentic-certificate-skill](https://github.com/CompleteTech-LLC/agentic-certificate-skill) | Attendance certificates | Private; optional; existing authorization required |
+| [agentic-security-review-skill](https://github.com/CompleteTech-LLC/agentic-security-review-skill) | Findings, controls and applicable launch blockers | Public |
+| [agentic-customer-success-skill](https://github.com/CompleteTech-LLC/agentic-customer-success-skill) | Account health, renewal and expansion | Public |
+| [agentic-case-study-skill](https://github.com/CompleteTech-LLC/agentic-case-study-skill) | Evidence-backed proof with explicit permission for use | Public |
+| [agentic-envelope-skill](https://github.com/CompleteTech-LLC/agentic-envelope-skill) | Addressed envelopes and delivery packaging | Public |
+| [agentic-certificate-skill](https://github.com/CompleteTech-LLC/agentic-certificate-skill) | Attendance certificates | Private; optional; existing access required |
 
-All other install keys match their repository names. The private skill is excluded from default plans and audits; including it does not grant access, change visibility or authorize publication. No private assets are included in the public catalog.
+Other activation keys match their repository names. Private selection does not grant access or change visibility. No private assets are copied into this public catalog.
 
-## Installation plan, not automatic installation
-
-From a full orchestrator checkout:
+## Installation planning
 
 ```bash
 python scripts/skill_library.py list
 python scripts/skill_library.py plan --destination ./skills
 ```
 
-`plan` prints quoted commands for a POSIX shell; it does not create directories, clone repositories, install dependencies, load credentials or execute skills. Review the plan, retain only the skills needed, and run approved commands yourself. On Windows, use the listed HTTPS repository URLs with Git and the explicit install-directory names, or review the POSIX plan in Git Bash/WSL.
+For PowerShell:
 
-The plan follows each repository's current default branch. It is not a pinned, reproducible or atomic suite release. For a controlled deployment, record and review each selected commit SHA before use. Existing destination directories are not updated by the plan: Git refuses to clone over non-empty checkouts. Update those separately after reviewing their changes.
+```powershell
+python scripts/skill_library.py plan --shell powershell --destination ./skills
+```
 
-Use `--include-private` only for an operator already authorized to access the certificate repository. Never add tokens to generated commands, commit credentials or copy private sources into public repositories. Each skill's `ONBOARDING.md` covers its own environment setup and safe first run. Install full directories in the location documented by the chosen agent product; the catalog does not assume one product's global directory.
+These commands list metadata or print quoted installation commands; they do not create directories, clone, install dependencies, execute skills or load credentials. Review the output and retain only the needed specialists. Use each skill's ONBOARDING.md and your agent product's documented discovery directory.
 
-## Offline cross-repository audit
+Plans follow current default branches, not a pinned or atomic suite release. Record reviewed commit SHAs for controlled deployment. Existing non-empty destinations are not updated by a clone plan. `--include-private` only selects the optional certificate member for an already-authorized operator; never embed tokens in commands.
 
-Place sibling checkouts under one directory using their skill keys (or repository names for existing workspaces), then run:
+## Offline audit
 
 ```bash
 python scripts/skill_library.py audit --workspace ./skills
 ```
 
-The audit validates each manifest, declared local entry points/examples, frontmatter name, README navigation and brand asset. It also checks that `scripts/validate_package.py`, `tests/test_package_contract.py`, `CONTRIBUTING.md` and `.github/workflows/package-contract.yml` exactly match the copies in this orchestrator checkout. Missing skills and drift fail explicitly. It does not fetch remote repositories or execute their code. Add `--include-private` to audit an already-authorized local certificate checkout.
+The audit validates each local checkout and its catalog identity, then compares eight shared text files against this hub. It normalizes platform line endings only; real content drift, missing files, unsafe paths and workspace escapes fail. It reads sibling files without importing or executing their code, and reports errors across the selected members. Add `--include-private` only when that authorized private checkout is already present.
 
-## Shared package contract, schema 1
-
-| Path | Purpose |
+| Shared path | Responsibility |
 |---|---|
-| `README.md` | Existing specialist overview plus consistent family navigation and logo reference |
-| `ONBOARDING.md` | Environment setup, install key, safe first result, branding, permissions and troubleshooting |
-| `CONTRIBUTING.md` | Shared compatibility, evidence, privacy, branding and PR expectations |
-| `skill-package.json` | Family identity, install key, repository, implementation kind, entry points, example inputs and network mode |
-| `scripts/validate_package.py` | Standard-library, read-only checkout validation |
-| `tests/test_package_contract.py` | Synthetic regression tests for malformed metadata, paths, links and assets |
-| `.github/workflows/package-contract.yml` | Dedicated, least-privilege CI; existing quality workflows remain independent |
+| `scripts/validate_package.py` | Read-only schema, file, navigation, guide-link and PNG-chunk checks |
+| `tests/test_package_contract.py` | Synthetic common regressions, including malformed metadata and unsafe paths |
+| `CONTRIBUTING.md` | Verification, compatibility, evidence and privacy expectations |
+| `AGENTS.md` | Maintainer-agent instructions and specialist boundaries |
+| `BRANDING.md` | Approved identity, starter palette and downstream handoffs |
+| `.editorconfig` | UTF-8, LF and Python indentation defaults |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Change, evidence, boundary and family-consistency reporting |
+| `.github/workflows/package-contract.yml` | Linux, Windows and macOS package CI on Python 3.12 |
 
-This adds a package layer to the [existing shell standard](skill-layout-standardization.md). It does not require identical implementations: catalog renderers remain in `scripts/`, config generators retain root `generate_*.py` CLIs, the orchestrator keeps workflow adapters, and the ledger keeps its own storage/pipeline and standard-library runtime. The package schema version is not a registry release version.
+README navigation is common, while ONBOARDING.md and skill-package.json remain specialist-specific. Required base configurations and other demonstration dependencies belong in `example_inputs`; implementation kind alone does not imply one configuration format. The existing certificate, contract and envelope manifests explicitly list their base INI files.
 
-## Consistent presentation without weakening safeguards
+## Specialist behavior and approvals
 
-Use **CompleteTech LLC Skills** in family navigation and reuse the existing `assets/logo.png`. Retain specialist document types and layouts: a one-page invoice is not a proposal cover, and an envelope is not an attendance certificate. The ledger's neutral-by-default branding remains intentional; choose its CompleteTech preset explicitly rather than forcing it on personal reports. Existing [brand asset restrictions](../BRAND_ASSETS.md) remain unchanged.
+Catalog renderers retain their scripts and templates; config generators retain their root CLIs; the hub retains adapters and `project_state`; the ledger retains its standard-library core, neutral branding and explicit source/retention choices. Match presentation through approved settings and local assets, not by replacing every output with one layout.
 
-Use bundled demonstrations for onboarding, write new outputs under `output/` or the documented synthetic-test output directory, and preserve committed previews. A successful render or structural check is not a review of visual quality or truth. Do not invent metrics, approvals, attendance, financial facts, legal authority or client permission.
+Use the existing [workflow schema](workflow-definition-schema.yaml) and [services adapter](completetech-services-workflow.yaml). Preserve evidence, artifact versions, approved identity, confidentiality, audience, approval owners/statuses, blockers and next specialist at handoff. The ledger supplies estimates, not authority to bill. Anonymization is not publication consent, and a rendered certificate is not evidence of attendance.
 
-## Lifecycle handoffs
-
-A typical engagement moves from discovery to proposal, contract, invoice, delivery, customer success and approved proof. Email and envelope skills support communication and packaging; security review participates only where the relevant risk gate requires it. The ledger supplies evidence, not authority to bill, and certificates remain a distinct attendance workflow.
-
-Use the existing [workflow schema](workflow-definition-schema.yaml) and [CompleteTech services adapter](completetech-services-workflow.yaml). Preserve verified facts, source artifacts, applicable approval owners/statuses, blockers and open questions in `project_state`. Installing the library does not enable external actions or confer approval across specialist boundaries.
-
-## Verification and maintenance
+## Verification boundaries
 
 ```bash
 python -m unittest discover -s tests -p 'test_package_*.py' -v
@@ -83,4 +76,4 @@ python scripts/validate_package.py
 python scripts/validate_quality.py
 ```
 
-The first two commands need only Python; the existing full quality validator has additional documented dependencies. Review coordinated PRs independently, respect required checks/reviews, then audit the resulting sibling checkouts for drift. Do not publish registry releases or change private/public visibility as an implicit part of a structural update.
+The first two need only Python. The original Quality gate has its own documented dependencies and remains mandatory alongside package checks. The guide-link scan covers ordinary inline destinations in ONBOARDING.md, CONTRIBUTING.md, BRANDING.md and AGENTS.md, not all Markdown, HTML or anchors. PNG validation covers bounded chunks/CRCs, not decompression or artwork. Run the specialist checks and inspect actual generated outputs separately. Schema 1 is a checkout contract, not a registry version or release certification.

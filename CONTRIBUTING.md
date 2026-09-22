@@ -15,7 +15,13 @@ python -m unittest discover -s tests -p 'test_package_*.py' -v
 python scripts/validate_package.py
 ```
 
-Also run the existing quality and regression commands in [README.md](README.md). Package checks are read-only and do not execute specialist generators. They validate metadata, required files, local documentation links and PNG chunk integrity, not decoded artwork or document truth. Do not weaken original Quality checks to obtain a green result.
+Also run the existing full Quality gate after installing its documented development tools:
+
+```bash
+python scripts/validate_quality.py
+```
+
+The repository's `QUALITY.md` and [README.md](README.md) describe additional specialist checks and dependencies. Package checks are read-only and do not execute specialist generators. Their link scan covers ordinary inline destinations in ONBOARDING.md, CONTRIBUTING.md, BRANDING.md and AGENTS.md, not the entire documentation tree, reference-style links, HTML or anchor validity. PNG checks cover bounded chunk structure and CRC integrity, not decompression, pixel decoding or artwork. The full Quality gate and visual review remain separate. Do not weaken original Quality checks to obtain a green result.
 
 ## Coordinated changes
 

@@ -2,28 +2,27 @@
 
 [Family guide](skill-family.md) · [Branding and handoffs](../BRANDING.md) · [Contributing](../CONTRIBUTING.md)
 
-This pass reconciles the unfinished first rollout and extends the common package contract without changing specialist runtime behavior. Shared files now include the validator, regression suite, contributor guide, AGENTS.md, BRANDING.md, .editorconfig, PR template and package CI. The package CI runs on Linux, Windows and macOS with Python 3.12. Existing Quality workflows remain separate.
+This pass reconciles the unfinished first rollout and aligns eight shared files: validator, regression tests, contributor guide, AGENTS.md, BRANDING.md, .editorconfig, PR template and package CI. Original Quality workflows remain separate; package CI runs on Linux, Windows and macOS with Python 3.12.
 
-The validator requires base config.ini for config generators, checks all declared entry points/example inputs, validates the four local onboarding/contribution/branding/agent guides, rejects encoded traversal and unsupported URL schemes, and checks bounded PNG chunks/CRCs. Image decoding, visual review and factual approval remain outside its scope.
+## Review corrections
 
-The library audit compares shared UTF-8 text after normalizing platform line endings, not arbitrary whitespace. Missing files, catalog/name mismatches, workspace escapes and real content drift fail. An error in one checkout is reported without skipping the remaining members.
+Activation-name validation counts duplicate plain/quoted top-level name keys before interpreting their values, including duplicate values with comments or unsupported scalar forms. Quotes must match; valid inline comments remain supported. The package contract supports a simple name scalar, not general YAML evaluation.
 
-## Windows installation plan
+Ordinary Markdown link destinations are separated from optional titles and angle delimiters, while fenced/inline code examples are excluded. The scan remains limited to the four named guides and is not a complete Markdown, reference-link, HTML or anchor linter. This scope is explicit in the shared contributor guide.
 
-```powershell
-python scripts/skill_library.py plan --shell powershell --destination ./skills
-```
+Repository/install-name matching rejects a doubled -skill suffix while preserving the ledger's ai-usage-ledger key. Required base configuration is explicitly declared in each applicable manifest; config-generator alone does not force INI on future implementations. The common suite includes symlink-loop and escape regressions, required-file failures and corrupt PNG chunk checks. PNG pixel/decompression validation remains outside the structural contract.
 
-This prints literal-quoted commands without installing anything. POSIX remains the default. Both plans follow default branches rather than a pinned release. Private certificate inclusion is explicit and does not grant access.
+The new matrix exposed a POSIX-only library-test assertion. It was corrected to compare the platform-native, shell-quoted destination without weakening the Windows job. Library audit normalizes only line endings, handles errors per checkout, and preserves the default exclusion of private members. PowerShell plans use literal quoting and reject control characters.
 
-## Verification
+## Maintenance
 
 ```bash
 python -m unittest discover -s tests -p 'test_package_*.py' -v
 python scripts/validate_package.py
+python scripts/validate_quality.py
 python scripts/skill_library.py audit --workspace ./skills
 ```
 
-The common tests group invalid metadata, required files, paths/links, symlinks, corrupt logos, activation names, base config and non-execution into parameterized cases. The hub also retains catalog/plan/audit tests and adds PowerShell, control-character, name-coherence and shared-file regressions.
+The common suite uses parameterized negative and positive cases. The hub additionally tests catalog membership, install plans, shared-file drift and PowerShell behavior. Keep specialist onboarding commands tied to actual entry points, particularly ledger.py init/run and the independently consented scheduling operation.
 
-Do not infer merge or registry-release status from this document. Verify each PR result and the exact tested head. Ledger onboarding must follow the actual ledger.py init/run CLI, not a fabricated manifest-preflight or test-runner interface.
+These notes do not establish merge status or a registry release. Verify actual PR results and exact tested heads. Private sources/assets remain private, no live services are exercised by structural checks, and visual/factual review remains separate.

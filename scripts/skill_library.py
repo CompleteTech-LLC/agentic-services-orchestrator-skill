@@ -6,7 +6,7 @@ import json
 import re
 import shlex
 from pathlib import Path
-from validate_package import FAMILY, local_file, unique_object, validate
+from validate_package import FAMILY, allowed_repositories, local_file, unique_object, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 SHARED = ("scripts/validate_package.py", "tests/test_package_contract.py", "CONTRIBUTING.md", "AGENTS.md", "BRANDING.md", ".editorconfig", ".github/PULL_REQUEST_TEMPLATE.md", ".github/workflows/package-contract.yml")
@@ -27,7 +27,7 @@ def load_members(path: Path, include_private: bool = False) -> list[dict]:
         name, repo = member["skill_name"], member["repository"]
         if not isinstance(name, str) or len(name) > 64 or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
             raise ValueError("invalid skill name")
-        if not isinstance(repo, str) or repo not in (f"CompleteTech-LLC/{name}", f"CompleteTech-LLC/{name}-skill"):
+        if not isinstance(repo, str) or repo not in allowed_repositories(name):
             raise ValueError("repository and skill name mismatch")
         if type(member["private"]) is not bool or not isinstance(member["role"], str) or not member["role"].strip():
             raise ValueError("invalid visibility or role")
