@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "family": "completetech-skills",
+  "repository": "CompleteTech-LLC/agentic-services-orchestrator-skill",
+  "skill_name": "agentic-services-orchestrator-skill",
+  "kind": "orchestrator",
+  "entrypoints": [
+    "scripts/render_pdf.py",
+    "scripts/skill_library.py"
+  ],
+  "example_inputs": [
+    "references/completetech-services-workflow.yaml",
+    "assets/examples/example.md"
+  ],
+  "network_mode": "local",
+  "private": false
+}
