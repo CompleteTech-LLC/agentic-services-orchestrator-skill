@@ -1,32 +1,24 @@
 # Contributing to CompleteTech LLC Skills
 
-[Start here](ONBOARDING.md) · [Agent instructions](SKILL.md) · [Brand asset policy](BRAND_ASSETS.md)
+[Start here](ONBOARDING.md) · [Branding and handoffs](BRANDING.md) · [Maintainer instructions](AGENTS.md) · [Specialist instructions](SKILL.md)
 
-## Scope and compatibility
+## Compatibility
 
-Keep each skill independently usable. Preserve its skill key, CLI entry points, specialist templates, approval gates and documented network boundaries. The usage ledger retains its standard-library runtime; generator skills retain their root `generate_*.py` entry points. Do not move these solely to make directory trees identical.
+Keep each skill independently usable. Preserve activation keys, root generator CLIs, templates, runtime dependencies, consent and approval gates. The ledger's standard-library core and neutral branding are intentional differences, not gaps to remove.
 
-Use a focused branch and PR. Describe the affected skill, user-visible change, compatibility impact, tests and any unverified behavior. Do not bypass branch protection, required review or failed checks.
+## Verification
 
-## Package checks
-
-From a full GitHub checkout, with Python 3.12 (the CI baseline):
+From a full checkout using Python 3.12, the package CI baseline:
 
 ```bash
-python -m unittest discover -s tests -p test_package_contract.py -v
+python -m unittest discover -s tests -p 'test_package_*.py' -v
 python scripts/validate_package.py
 ```
 
-The package contract is standard-library-only and read-only: it checks metadata, navigation, local paths and the existing logo. It does not execute generators or certify document content. Also run this repository's existing quality and regression commands documented in [README.md](README.md). Where present, `scripts/validate_quality.py` remains an independent gate; do not remove or weaken it to pass package validation.
+Also run the existing quality and regression commands in [README.md](README.md). Package checks are read-only and do not execute specialist generators. They validate metadata, required files, local documentation links and PNG chunk integrity, not decoded artwork or document truth. Do not weaken original Quality checks to obtain a green result.
 
-## Documentation and branding
+## Coordinated changes
 
-Keep [ONBOARDING.md](ONBOARDING.md), `skill-package.json` and the actual entry points synchronized. Use **CompleteTech LLC Skills** for the family navigation and the existing `assets/logo.png`; do not substitute unrelated artwork. Keep outputs and temporary experiments under `output/` or a temporary directory, not over committed previews.
+Keep `skill-package.json`, onboarding and actual entry points synchronized. Shared validator, tests, CI, maintainer instructions and branding guidance must match the orchestrator's shared-file audit. Use focused PRs and report exact checks, failures and limitations. Respect branch protection, review requirements and changed heads.
 
-Code, templates and documentation retain their existing [MIT license](LICENSE). Names, logos, seals and other brand assets remain subject to [BRAND_ASSETS.md](BRAND_ASSETS.md); this package work grants no additional rights. Do not copy private assets or redistribute bundled fonts as part of a public package update.
-
-## Evidence and privacy
-
-Use synthetic fixtures. Never commit credentials, completion keys, personal logs, client documents, private account mappings or unapproved quotes. A successful render is not legal approval, payment authorization, verified attendance, security signoff, client acceptance or permission to publish/send.
-
-Shared contract changes should be coordinated through the orchestrator's skill-library catalog and applied consistently to the affected siblings. `schema_version` versions the package contract, not a ClawHub release. Registry publication and repository visibility changes require separate explicit authorization.
+Use synthetic fixtures and new output paths instead of overwriting committed previews. Never commit secrets, personal logs, real account mappings, client documents or unapproved quotes. Code remains under [LICENSE](LICENSE); branding remains under [BRAND_ASSETS.md](BRAND_ASSETS.md). Do not redistribute private assets or fonts. Registry releases and repository visibility changes require separate authorization.

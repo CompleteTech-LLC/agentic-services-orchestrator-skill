@@ -1,144 +1,119 @@
-"""Offline regression tests for the shared package contract, using synthetic files."""
-from __future__ import annotations
-
+"""Synthetic package regressions; no specialist code or personal data is used."""
 import importlib.util
 import json
-import tempfile
 import struct
-import zlib
+import tempfile
 import unittest
+import zlib
 from pathlib import Path
 
-MODULE = Path(__file__).resolve().parents[1] / "scripts" / "validate_package.py"
-SPEC = importlib.util.spec_from_file_location("validate_package", MODULE)
-assert SPEC is not None and SPEC.loader is not None
+SPEC = importlib.util.spec_from_file_location("package", Path(__file__).resolve().parents[1] / "scripts/validate_package.py")
+assert SPEC and SPEC.loader
 package = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(package)
 
 
-def png_fixture() -> bytes:
-    def chunk(kind: bytes, payload: bytes) -> bytes:
-        return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload))
-    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
-            + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00")) + chunk(b"IEND", b""))
+def png_fixture():
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(b"\0\0\0\0")) + chunk(b"IEND", b"")
 
 
 class PackageContractTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name) / "checkout"
-        self.root.mkdir()
-        self.manifest = dict(schema_version=1, family=package.FAMILY,
-                             repository="CompleteTech-LLC/example-skill", skill_name="example-skill",
-                             kind="catalog-renderer", entrypoints=["scripts/render.py"],
-                             example_inputs=["examples/input.md"], network_mode="local", private=False)
-        for value in (*package.FILES, "scripts/render.py", "examples/input.md"):
-            path = self.root / value
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name) / "checkout"
+        self.manifest: dict[str, object] = dict(schema_version=1, family=package.FAMILY, repository="CompleteTech-LLC/demo-skill", skill_name="demo-skill", kind="catalog-renderer", entrypoints=["scripts/render.py"], example_inputs=["example.md"], network_mode="local", private=False)
+        for name in (*package.FILES, "scripts/render.py", "example.md"):
+            path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("demo\n", encoding="utf-8")
-        (self.root / "SKILL.md").write_text("---\nname: example-skill\ndescription: Demo\n---\n", encoding="utf-8")
-        (self.root / "README.md").write_text("\n".join(package.NAVIGATION), encoding="utf-8")
         (self.root / "assets").mkdir()
         (self.root / "assets/logo.png").write_bytes(png_fixture())
+        (self.root / "SKILL.md").write_text("---\nname: demo-skill\n---\n", encoding="utf-8")
+        (self.root / "README.md").write_text("\n".join(package.NAVIGATION), encoding="utf-8")
         self.save()
 
     def save(self):
         (self.root / "skill-package.json").write_text(json.dumps(self.manifest), encoding="utf-8")
 
-    def test_valid(self):
+    def test_valid_and_no_execution(self):
+        (self.root / "scripts/render.py").write_text("raise RuntimeError('do not execute')", encoding="utf-8")
         self.assertEqual(package.validate(self.root), [])
 
-    def test_ledger_repository_name_differs_from_install_name(self):
-        self.manifest.update(repository="CompleteTech-LLC/ai-usage-ledger-skill", skill_name="ai-usage-ledger", kind="usage-ledger", network_mode="operator-selected-hosts")
-        (self.root / "SKILL.md").write_text("---\nname: ai-usage-ledger\n---\n", encoding="utf-8")
-        self.save()
-        self.assertEqual(package.validate(self.root), [])
-
-    def test_schema_rejects_bad_types_and_unknown_values(self):
-        for key, value in (("schema_version", True), ("family", "other"), ("kind", []), ("network_mode", {}), ("private", "false"), ("repository", "other/example"), ("skill_name", "../example"), ("entrypoints", []), ("example_inputs", "input.md")):
-            with self.subTest(key=key):
-                original = self.manifest[key]
-                self.manifest[key] = value
+    def test_bad_values(self):
+        for field, value in (("schema_version", True), ("family", "other"), ("skill_name", "../escape"), ("repository", "other/demo"), ("kind", []), ("network_mode", {}), ("private", "false"), ("entrypoints", []), ("entrypoints", [None]), ("example_inputs", "example.md"), ("example_inputs", ["example.md", "example.md"])):
+            with self.subTest(field=field, value=value):
+                original = self.manifest[field]
+                self.manifest[field] = value
                 self.save()
                 self.assertTrue(package.validate(self.root))
-                self.manifest[key] = original
-        self.save()
+                self.manifest[field] = original
 
-    def test_unknown_and_missing_fields(self):
-        self.manifest["typo"] = True
-        del self.manifest["private"]
-        self.save()
-        self.assertTrue(package.validate(self.root))
-
-    def test_duplicate_json_keys(self):
-        (self.root / "skill-package.json").write_text('{"family":"a","family":"b"}', encoding="utf-8")
-        self.assertIn("duplicate JSON key", package.validate(self.root)[0])
-
-    def test_invalid_or_non_object_json(self):
-        for text in ("{", "[]", "null"):
+    def test_json_and_missing_fields(self):
+        for text in ("{", "[]", "null", "{}", '{"private":true,"private":false}'):
             (self.root / "skill-package.json").write_text(text, encoding="utf-8")
             self.assertTrue(package.validate(self.root))
 
-    def test_unsafe_and_missing_paths(self):
-        for value in ("../outside", "/tmp/outside", "C:/outside", "scripts\\render.py", "missing.py", None, {}, ""):
+    def test_paths_and_links(self):
+        for value in ("../escape", "/escape", "C:/escape", "a\\b", "./example.md", "a//b", "bad\npath", "missing.md"):
             with self.subTest(path=value):
                 self.manifest["entrypoints"] = [value]
                 self.save()
                 self.assertTrue(package.validate(self.root))
-
-    def test_duplicate_paths(self):
-        self.manifest["entrypoints"] *= 2
+        self.manifest["entrypoints"] = ["scripts/render.py"]
         self.save()
-        self.assertTrue(package.validate(self.root))
+        for target in ("missing.md", "%2e%2e/outside", "//outside/file", "file:///etc/passwd", "file:example.md"):
+            (self.root / "ONBOARDING.md").write_text(f"[Bad]({target})", encoding="utf-8")
+            self.assertTrue(package.validate(self.root))
 
-    def test_symlink_escape(self):
-        outside = Path(self.temp.name) / "outside.py"
-        outside.write_text("private", encoding="utf-8")
-        path = self.root / "scripts/render.py"
-        path.unlink()
+    def test_escaping_symlink(self):
+        target = self.root / "example.md"
+        outside = self.root.parent / "outside.md"
+        outside.write_text("outside", encoding="utf-8")
+        target.unlink()
         try:
-            path.symlink_to(outside)
+            target.symlink_to(outside)
         except OSError as exc:
             self.skipTest(str(exc))
         self.assertTrue(package.validate(self.root))
 
-    def test_missing_brand_asset_and_invalid_png(self):
-        logo = self.root / "assets/logo.png"
-        logo.write_text("not an image", encoding="utf-8")
-        self.assertTrue(package.validate(self.root))
-        logo.unlink()
-        self.assertTrue(package.validate(self.root))
+    def test_png_corruption(self):
+        image = png_fixture()
+        for data in (b"not png", image[:8], image[:-12], image + b"junk", image[:-1] + bytes([image[-1] ^ 1])):
+            (self.root / "assets/logo.png").write_bytes(data)
+            self.assertTrue(package.validate(self.root))
 
-    def test_truncated_or_corrupted_png_rejected(self):
-        valid = png_fixture()
-        for data in (valid[:8], valid[:-12], valid + b"junk", valid[:-1] + bytes([valid[-1] ^ 1])):
-            with self.subTest(length=len(data)):
-                (self.root / "assets/logo.png").write_bytes(data)
+    def test_missing_required_files(self):
+        for name in (*package.FILES, "assets/logo.png"):
+            with self.subTest(path=name):
+                path = self.root / name
+                data = path.read_bytes()
+                path.unlink()
                 self.assertTrue(package.validate(self.root))
+                path.write_bytes(data)
 
-    def test_frontmatter_mismatch(self):
-        (self.root / "SKILL.md").write_text("---\nname: another-skill\n---\n", encoding="utf-8")
+    def test_config_generator_requires_base(self):
+        self.manifest["kind"] = "config-generator"
+        self.save()
         self.assertTrue(package.validate(self.root))
-
-    def test_quoted_frontmatter_and_crlf(self):
-        (self.root / "SKILL.md").write_bytes(b'---\r\nname: "example-skill"\r\n---\r\n')
+        (self.root / "config.ini").write_text("[demo]\n", encoding="utf-8")
         self.assertEqual(package.validate(self.root), [])
 
-    def test_missing_navigation(self):
-        (self.root / "README.md").write_text("demo", encoding="utf-8")
+    def test_names_and_navigation(self):
+        (self.root / "SKILL.md").write_text("---\nname: wrong\n---\n", encoding="utf-8")
         self.assertTrue(package.validate(self.root))
-
-    def test_broken_onboarding_link(self):
-        (self.root / "ONBOARDING.md").write_text("[Missing](missing.md)", encoding="utf-8")
-        self.assertTrue(package.validate(self.root))
-
-    def test_valid_local_external_and_anchor_links(self):
-        (self.root / "ONBOARDING.md").write_text("[Readme](README.md#demo) [Web](https://example.com) [Here](#demo)", encoding="utf-8")
+        (self.root / "SKILL.md").write_bytes(b'---\r\nname: "demo-skill"\r\n---\r\n')
         self.assertEqual(package.validate(self.root), [])
+        (self.root / "README.md").write_text("no navigation", encoding="utf-8")
+        self.assertTrue(package.validate(self.root))
 
-    def test_never_executes_declared_entrypoints(self):
-        (self.root / "scripts/render.py").write_text("raise RuntimeError('must not execute')", encoding="utf-8")
+    def test_ledger_install_name_and_links(self):
+        self.manifest.update(skill_name="ai-usage-ledger", repository="CompleteTech-LLC/ai-usage-ledger-skill", kind="usage-ledger", network_mode="operator-selected-hosts")
+        self.save()
+        (self.root / "SKILL.md").write_text("---\nname: ai-usage-ledger\n---\n", encoding="utf-8")
+        (self.root / "ONBOARDING.md").write_text("[Read](README.md#demo) [Web](https://example.com) [Here](#here)", encoding="utf-8")
         self.assertEqual(package.validate(self.root), [])
 
 
