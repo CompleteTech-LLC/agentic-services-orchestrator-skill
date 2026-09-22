@@ -39,7 +39,8 @@ class SkillLibraryTests(unittest.TestCase):
         members = library.load_members(ROOT / "references/skill-library.json")
         plans = library.install_plan(members, Path("skills"))
         ledger = next(line for line in plans if "ai-usage-ledger-skill.git" in line)
-        self.assertTrue(ledger.endswith("skills/ai-usage-ledger"))
+        expected = library.quote(str(Path("skills") / "ai-usage-ledger"), "posix")
+        self.assertTrue(ledger.endswith(expected))
 
     def test_plan_quotes_spaces_and_does_not_create_destination(self):
         with tempfile.TemporaryDirectory() as tmp:
