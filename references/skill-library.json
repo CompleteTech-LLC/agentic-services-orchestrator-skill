@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "family": "completetech-skills",
+  "members": [
+    {
+      "repository": "CompleteTech-LLC/ai-usage-ledger-skill",
+      "skill_name": "ai-usage-ledger",
+      "role": "Usage evidence and cost attribution",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-delivery-skill",
+      "skill_name": "agentic-delivery-skill",
+      "role": "Kickoff, execution, evaluation and handoff",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-invoice-skill",
+      "skill_name": "agentic-invoice-skill",
+      "role": "Billing drafts from approved commercial facts",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-services-orchestrator-skill",
+      "skill_name": "agentic-services-orchestrator-skill",
+      "role": "Lifecycle routing and approval-aware handoffs",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-certificate-skill",
+      "skill_name": "agentic-certificate-skill",
+      "role": "Attendance certificates; authorized access only",
+      "private": true
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-security-review-skill",
+      "skill_name": "agentic-security-review-skill",
+      "role": "Security findings, controls and launch blockers",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-proposal-skill",
+      "skill_name": "agentic-proposal-skill",
+      "role": "Proposals and statements of work",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-discovery-skill",
+      "skill_name": "agentic-discovery-skill",
+      "role": "Discovery, readiness and scoping",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-case-study-skill",
+      "skill_name": "agentic-case-study-skill",
+      "role": "Evidence-backed, approval-controlled proof assets",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-envelope-skill",
+      "skill_name": "agentic-envelope-skill",
+      "role": "Addressed envelopes and delivery packaging",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-customer-success-skill",
+      "skill_name": "agentic-customer-success-skill",
+      "role": "Account health, renewal and expansion",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-contract-skill",
+      "skill_name": "agentic-contract-skill",
+      "role": "Agreement packages from approved terms",
+      "private": false
+    },
+    {
+      "repository": "CompleteTech-LLC/agentic-email-skill",
+      "skill_name": "agentic-email-skill",
+      "role": "Email copy and sequences; never automatic sending",
+      "private": false
+    }
+  ]
+}
