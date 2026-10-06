@@ -3,7 +3,10 @@
 # Agentic Services Orchestrator Skill
 
 <p align="center">
-  <img src="assets/logo.png" alt="CompleteTech LLC logo" width="260">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <img src="assets/logo.png" alt="CompleteTech LLC logo" width="260">
+  </picture>
 </p>
 
 A schema-driven Codex workflow orchestrator with a CompleteTech LLC agentic services adapter as the default workflow.
