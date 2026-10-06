@@ -21,7 +21,7 @@ Part of the CompleteTech LLC agentic services skill library. This skill coordina
 - Runtime binaries: `python3`
 - Python packages: `reportlab==4.5.1`, `pyyaml==6.0.3` (optional PNG preview: `pypdfium2==5.8.0`, `pillow==12.2.0`)
 - Intended registry/discovery tags: `latest`, `complete-tech`, `codex-skill`, `agentic-development`, `agentic-workflows`, `orchestration`, `skill-routing`, `lifecycle`, `pdf`, `pdf-generator`
-- License: repository code, templates, and documentation use MIT; published by CompleteTech on ClawHub.
+- License: repository code, templates, and documentation use MIT; prepared for ClawHub publishing, publication is a separate, approved step (see `CLAW_HUB_PUBLISHING.md`).
 - Brand assets: CompleteTech LLC names, logos, seals, and brand assets are reserved; see `BRAND_ASSETS.md`.
 
 ## Workflow Diagram
